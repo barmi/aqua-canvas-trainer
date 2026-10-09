@@ -5,7 +5,7 @@
 
 - [x] [#1 배경 3종과 선택 라이브러리](https://github.com/barmi/aqua-canvas-trainer/issues/1)
 - [x] [#2 Pencil 수채화 엔진과 작업 공간](https://github.com/barmi/aqua-canvas-trainer/issues/2)
-- [ ] [#3 조명·방향·시간대별 가이드](https://github.com/barmi/aqua-canvas-trainer/issues/3)
+- [x] [#3 조명·방향·시간대별 가이드](https://github.com/barmi/aqua-canvas-trainer/issues/3)
 - [ ] [#4 자동 저장·복구·목록·내보내기](https://github.com/barmi/aqua-canvas-trainer/issues/4)
 - [ ] [#5 카페·정원·골목 확장](https://github.com/barmi/aqua-canvas-trainer/issues/5)
 - [ ] [#6 PWA·오프라인·iPad 레이아웃](https://github.com/barmi/aqua-canvas-trainer/issues/6)

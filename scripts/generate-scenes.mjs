@@ -18,6 +18,7 @@ for (const art of artworks) {
     const shadedSide = direction.includes('left') || direction === 'left' ? art.facets.left : art.facets.right
     const litSide = direction.includes('left') || direction === 'left' ? art.facets.right : art.facets.left
     await writeFile(`${root}/guides/${direction}-shadow.svg`, svg(`<g fill="white">${shape}${shadedSide}</g>`))
+    await writeFile(`${root}/guides/${direction}-long-shadow.svg`, svg(`<g fill="white">${art.longShadows[direction]}${shadedSide}</g>`))
     await writeFile(`${root}/guides/${direction}-highlight.svg`, svg(`<g fill="white">${litSide}</g>`))
   }
   generated[art.id] = { indoor: art.indoor, regions: art.regions.map(({ id, label, material }) => ({ id, label, material })) }

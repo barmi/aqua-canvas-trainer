@@ -40,6 +40,7 @@ export interface PracticeSession {
   guide: { id: string; version: number; currentStepId: string } | null
   lighting: LightingSettings
   rendererVersion: string
+  baseWashVisible: boolean
   createdAt: string
   updatedAt: string
   strokes: readonly PaintStroke[]

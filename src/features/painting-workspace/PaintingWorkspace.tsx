@@ -1,29 +1,39 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReadyScene } from '../../domain/scene'
-import type { BrushSettings } from '../../domain/painting'
+import type { BrushSettings, PracticeSession } from '../../domain/painting'
 import { WatercolorRenderer } from '../../engine/renderer/WatercolorRenderer'
 import { attachPaintingInput } from '../../engine/input/painting-input'
 import type { PaintTool } from '../../engine/input/painting-input'
 import { initialViewport, zoomAt } from '../../engine/input/coordinates'
-import { appendStroke, emptyHistory, redo, undo } from '../../engine/history/history'
-import { starterGuides } from '../../content/guides/starter-guides'
+import { appendStroke, redo, undo } from '../../engine/history/history'
+import { resolveGuide } from '../../content/guides/resolve-guide'
+import { directions } from '../../content/lighting-options'
+import { LightingControls } from '../lighting-controls/LightingControls'
+import type { GuideChoice } from '../lighting-controls/LightingControls'
+import { GuidePanel } from '../guide-panel/GuidePanel'
 
 const palette = ['#D6B65E','#B97F59','#849568','#5F8277','#70788F','#9D7780','#4B5752','#D9BE9B']
 export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: 1, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
 
-export function PaintingWorkspace({ scene, onBack }: { scene: ReadyScene; onBack: () => void }) {
+export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChange, onLightingChange }: { scene: ReadyScene; initialSession: PracticeSession; onBack: () => void; onSessionChange: (session: PracticeSession) => void; onLightingChange: (choice: GuideChoice) => void }) {
+  const original = useRef(initialSession)
+  const choice: GuideChoice = {time:initialSession.lighting.timeOfDay,kind:initialSession.lighting.primary.kind,direction:directions.find(value=>value.angle===initialSession.lighting.primary.azimuthDeg)?.id ?? 'upper-right'}
+  const guide = useMemo(()=>resolveGuide(scene,choice.time,choice.kind,choice.direction),[scene,choice.time,choice.kind,choice.direction])
+  const [stepIndex,setStepIndex]=useState(()=>Math.max(0,guide.steps.findIndex(step=>step.id===initialSession.guide?.currentStepId)))
+  const [showHint,setShowHint]=useState(true)
+  const [hintOpacity,setHintOpacity]=useState(.25)
+  const step=guide.steps[stepIndex]
   const [brush, setBrush] = useState(defaultBrush)
   const [tool, setTool] = useState<PaintTool>('brush')
   const [viewport, setViewport] = useState(initialViewport)
-  const [history, setHistory] = useState(emptyHistory)
-  const [showBase, setShowBase] = useState(true)
+  const [history, setHistory] = useState(()=>({strokes:initialSession.strokes,cursor:initialSession.historyCursor}))
+  const [showBase, setShowBase] = useState(initialSession.baseWashVisible)
   const [assetError, setAssetError] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const renderer = useRef<WatercolorRenderer | null>(null)
   const settings = useRef({ brush, tool, viewport })
   settings.current = { brush, tool, viewport }
-  const step = starterGuides.find(guide => guide.sceneId === scene.id)?.steps[0]
 
   useEffect(() => {
     const canvas = canvasRef.current!, stage = stageRef.current!
@@ -38,6 +48,9 @@ export function PaintingWorkspace({ scene, onBack }: { scene: ReadyScene; onBack
     return () => { detach(); painter.destroy(); renderer.current = null }
   }, [scene.id])
   useEffect(() => { renderer.current?.setHistory(history) }, [history])
+  useEffect(()=>{
+    onSessionChange({...original.current,strokes:history.strokes,historyCursor:history.cursor,baseWashVisible:showBase,guide:{id:guide.id,version:guide.version,currentStepId:guide.steps[stepIndex].id},updatedAt:new Date().toISOString()})
+  },[history,showBase,stepIndex,guide,onSessionChange])
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z' || (event.target instanceof HTMLElement && ['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName))) return
@@ -51,7 +64,7 @@ export function PaintingWorkspace({ scene, onBack }: { scene: ReadyScene; onBack
     <div className="workspace-heading"><div><button className="text-button" onClick={onBack}>← 풍경 고르기</button><h1>{scene.title}</h1></div><p className="muted">옅게 시작해서, 한 겹씩 쌓아보세요.</p></div>
     <div className="workspace-grid">
       <aside className="tools-panel" aria-label="그리기 도구">
-        <p className="panel-label">나의 붓</p>
+        <LightingControls scene={scene} choice={choice} onChange={onLightingChange}/><p className="lighting-note">빛을 바꾸면 지금 그림을 보관하고 새 연습을 시작해요.</p><p className="panel-label">나의 붓</p>
         <div className="tool-buttons">{(['brush','eraser','pan'] as const).map(value => <button key={value} className={tool === value ? 'selected' : ''} aria-pressed={tool === value} onClick={() => setTool(value)}>{({brush:'붓',eraser:'지우개',pan:'이동'})[value]}</button>)}</div>
         <div className="palette" aria-label="팔레트">{palette.map(color => <button key={color} className={brush.color === color ? 'color selected' : 'color'} style={{background:color}} aria-label={`색상 ${color}`} aria-pressed={brush.color === color} onClick={() => { setBrush({...brush,color});setTool('brush') }} />)}</div>
         <label className="custom-color">나만의 색<input type="color" aria-label="사용자 색상" value={brush.color} onChange={event => setBrush({...brush,color:event.target.value})} /></label>
@@ -66,13 +79,14 @@ export function PaintingWorkspace({ scene, onBack }: { scene: ReadyScene; onBack
           <div className="paper-frame" style={{ transform:`translate(${viewport.x}px,${viewport.y}px) scale(${viewport.scale})`, aspectRatio:`${scene.canvasSize.width}/${scene.canvasSize.height}` }}>
             {showBase && <img className="paper-layer" src={scene.assets.baseWashUrl} alt="" draggable={false} onError={() => setAssetError(true)} />}
             <canvas ref={canvasRef} width={scene.canvasSize.width} height={scene.canvasSize.height} aria-label="수채화 그리기 캔버스" />
+            {showHint && (step.overlayUrl ? [step.overlayUrl] : scene.regions.filter(region=>step.targetRegionIds.includes(region.id)).map(region=>region.maskUrl)).map(url=><div key={url} className="guide-overlay" style={{maskImage:`url("${url}")`,WebkitMaskImage:`url("${url}")`,backgroundColor:stepIndex===4?guide.lighting.primary.color:step.palette[0].color,opacity:hintOpacity}}/>)}
             <img className="paper-layer line-art" src={scene.assets.lineArtUrl} alt="" draggable={false} onError={() => setAssetError(true)} />
           </div>
           {assetError && <div className="canvas-error" role="alert">배경을 불러오지 못했어요. 연결을 확인하고 다시 열어주세요.</div>}
         </div>
         <div className="canvas-bottom"><span>나의 작은 수채화 · {history.cursor}번의 붓질</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
       </div>
-      <aside className="guide-panel" aria-label="채색 가이드"><p className="panel-label">빛을 따라, 한 단계씩</p><span className="step-count">01 / 01</span><h2>{step?.title}</h2><p>{step?.instruction}</p><div className="guide-reason">{step?.rationale}</div><p className="muted">지금은 자유롭게 색을 쌓아보세요. 먼저 밝은 면을 남기는 연습부터 시작해요.</p></aside>
+      <GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={current=>{setBrush({...brush,...current.suggestedBrush,color:current.palette[0].color});setTool('brush')}} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity}/>
     </div>
   </section>
 }

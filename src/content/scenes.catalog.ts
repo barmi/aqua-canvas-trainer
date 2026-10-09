@@ -1,6 +1,7 @@
 import type { PlannedScene, ReadyScene, Scene } from '../domain/scene'
 import { sceneAssets } from './scenes.generated'
 import { assetUrl } from './assets'
+import { guideIdsForScene } from './lighting-options'
 
 /** Production plan only. Add validated ReadyScene entries when assets and guides exist. */
 const scenePlans = [
@@ -64,7 +65,7 @@ export const sceneCatalog: readonly Scene[] = scenePlans.map((scene): Scene => {
     canvasSize: { width: 1000, height: 760 },
     assets: { lineArtUrl: url('line-art.svg'), baseWashUrl: url('base-wash.svg'), thumbnailUrl: url('thumbnail.svg') },
     regions: data.regions.map(region => ({ ...region, maskUrl: url(`masks/${region.id}.svg`) })),
-    guideIds: [`${scene.id}-starter`],
+    guideIds: guideIdsForScene(scene.id),
   }
 })
 
