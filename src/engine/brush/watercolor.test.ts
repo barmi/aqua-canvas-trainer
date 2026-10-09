@@ -1,8 +1,9 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas'
+import type { Canvas } from '@napi-rs/canvas'
 import { expect, test } from 'vitest'
 import { readFile } from 'node:fs/promises'
 import type { PaintStroke } from '../../domain/painting'
-import { flatWashPasses, flatWashProfile, paintStroke, pressureResponse } from './watercolor'
+import { flatWashPasses, flatWashProfile, openWashStart, paintStroke, paintStrokes, paintWashGroup, pressureResponse } from './watercolor'
 
 const stroke: PaintStroke = {id:'a',layerId:'paint',tool:'brush',seed:42,brush:{brushId:'watercolor-round',brushVersion:1,color:'#627755',size:30,opacity:.7,water:.7,pigment:.6},samples:[{x:.2,y:.5,pressure:.6,tiltX:0,tiltY:0,elapsedMs:0},{x:.8,y:.5,pressure:.7,tiltX:20,tiltY:0,elapsedMs:100}]}
 test('replay preserves the legacy appearance and eraser reduces paint alpha', async () => {
@@ -125,4 +126,98 @@ test('pressure response changes smoothly across the entire input range', () => {
     expect(next.opacityScale - previous.opacityScale).toBeLessThan(.025)
     previous = next
   }
+})
+// Wet wash: two horizontal flat runs of width 40 along y=80 and y=104 whose cores (edge .285 → core half 14.3)
+// overlap between y≈90 and y≈94. (150,92) is inside both, (150,72) and (150,112) inside only one.
+const run=(id:string,y:number,washId?:string):PaintStroke=>({...flatStroke,id,samples:[40,150,260].map((x,i)=>({x:x/300,y:y/228,pressure:.5,tiltX:0,tiltY:0,elapsedMs:i*20})),...(washId===undefined?{}:{washId})})
+const wetA=run('wet-a',80,'wash-1'),wetB=run('wet-b',104,'wash-1')
+function paintAll(strokes:readonly PaintStroke[]){
+  const canvas=createCanvas(300,228),ctx=canvas.getContext('2d')
+  paintStrokes(ctx as unknown as CanvasRenderingContext2D,strokes)
+  return {canvas,alpha:(x:number,y:number)=>ctx.getImageData(x,y,1,1).data[3]}
+}
+test('strokes of the same wet wash keep the single-stroke density where they overlap',()=>{
+  const wet=paintAll([wetA,wetB])
+  const single=wet.alpha(150,72),overlap=wet.alpha(150,92)
+  expect(Math.abs(overlap-single)).toBeLessThanOrEqual(1)
+  expect(Math.abs(wet.alpha(150,112)-single)).toBeLessThanOrEqual(1)
+  expect(Math.abs(overlap-flatWashProfile(wetA.brush).interior*255)).toBeLessThanOrEqual(4)
+  // The feathered edges of the layer never exceed the interior: the union is clipped at 1 before the density applies.
+  for(let y=60;y<=124;y++)expect(wet.alpha(150,y)).toBeLessThanOrEqual(overlap+1)
+  // The same two strokes without a wash id are separate multiply passes and darken where they overlap.
+  const dry=paintAll([run('dry-a',80),run('dry-b',104)])
+  expect(dry.alpha(150,92)).toBeGreaterThan(dry.alpha(150,72)+20)
+  expect(Math.abs(dry.alpha(150,72)-single)).toBeLessThanOrEqual(4)
+})
+test('a wet wash replays identically after serialization and through paintWashGroup',()=>{
+  const first=paintAll([wetA,wetB]),second=paintAll(JSON.parse(JSON.stringify([wetA,wetB])))
+  expect(first.canvas.toBuffer('image/png').equals(second.canvas.toBuffer('image/png'))).toBe(true)
+  const grouped=createCanvas(300,228)
+  paintWashGroup(grouped.getContext('2d') as unknown as CanvasRenderingContext2D,[wetA,wetB])
+  expect(grouped.toBuffer('image/png').equals(first.canvas.toBuffer('image/png'))).toBe(true)
+})
+// Rows of the wash-all preset (width 90, water .9 → core ≈52 px) 70 px apart overlap only in their feathers, which is
+// how a beginner sweeps a background. The additive mask keeps the seam at the interior; the earlier a+b−ab union
+// dipped to ~76 of 90 there, a pale stripe between every row.
+test('rows whose feathers overlap stay at the interior density across the seam and keep the brush colour',()=>{
+  const preset={brushId:'flat-wash' as const,brushVersion:1,color:'#D9B65D',size:90,opacity:.55,water:.9,pigment:.2}
+  const row=(id:string,y:number)=>({...flatStroke,id,brush:preset,washId:'wash-1',samples:[20,150,280].map((x,i)=>({x:x/300,y:y/228,pressure:.5,tiltX:0,tiltY:0,elapsedMs:i*20}))})
+  const wet=paintAll([row('row-a',60),row('row-b',130)])
+  const interior=Math.round(flatWashProfile(preset).interior*255)
+  for(let y=60;y<=130;y+=2)expect(Math.abs(wet.alpha(150,y)-interior)).toBeLessThanOrEqual(3)
+  // The mask is tinted once, so the seam and a three-stroke crossing carry exactly the single-stroke colour.
+  const pixel=(canvas:Canvas,x:number,y:number)=>[...canvas.getContext('2d').getImageData(x,y,1,1).data]
+  expect(pixel(wet.canvas,150,95)).toEqual(pixel(wet.canvas,150,60))
+  const column=(id:string)=>({...row(id,0),samples:[40,110,180].map((y,i)=>({x:.5,y:y/228,pressure:.5,tiltX:0,tiltY:0,elapsedMs:i*20}))})
+  const diagonal=(id:string)=>({...row(id,0),samples:[[60,20],[150,114],[240,208]].map(([x,y],i)=>({x:x/300,y:y/228,pressure:.5,tiltX:0,tiltY:0,elapsedMs:i*20}))})
+  const crossing=paintAll([row('cross-a',114),column('cross-b'),diagonal('cross-c')])
+  expect(pixel(crossing.canvas,150,114)).toEqual(pixel(wet.canvas,150,60))
+  // A single wet stroke feathers like a dry one: the same S-curve, read down the edge at x=150 above the first row.
+  const single=paintAll([row('single',130)]),dry=paintFlat({...row('single',130),washId:undefined})
+  for(let y=80;y<=130;y+=5)expect(Math.abs(single.alpha(150,y)-dry.alpha(150,y))).toBeLessThanOrEqual(5)
+})
+test('an eraser of the current versions lifts by its strength and pressure; saved erasers keep their fixed wipe',()=>{
+  const painted=()=>{const canvas=createCanvas(300,228),ctx=canvas.getContext('2d');ctx.fillStyle='#627755';ctx.fillRect(0,0,300,228);return {canvas,ctx:ctx as unknown as CanvasRenderingContext2D,alpha:(x:number,y:number)=>ctx.getImageData(x,y,1,1).data[3]}}
+  const width=(sheet:ReturnType<typeof painted>)=>{let top=228,bottom=0;for(let y=0;y<228;y++)if(sheet.alpha(150,y)<250){top=Math.min(top,y);bottom=Math.max(bottom,y)}return bottom-top+1}
+  const erase=(brushVersion:number,opacity:number,pressure=.55)=>{const sheet=painted();paintStroke(sheet.ctx,{...stroke,id:'erase',tool:'eraser',brush:{...stroke.brush,brushVersion,size:12,opacity},samples:stroke.samples.map(sample=>({...sample,pressure}))});return sheet}
+  // v1 and v2 erasers ignore strength (their width follows the old linear pressure), so a saved painting replays unchanged.
+  for(const version of [1,2]){
+    expect(erase(version,.35).canvas.toBuffer('image/png').equals(erase(version,1).canvas.toBuffer('image/png'))).toBe(true)
+    expect(erase(version,.35).alpha(150,114)).toBeLessThan(8)
+  }
+  // v3 at the lifting preset's strength (.35) leaves paint after one pass, so a second pass can soften the edge;
+  // at full strength it wipes, and a light press lifts less and narrower than a firm one.
+  const soft=erase(3,.35),full=erase(3,1),light=erase(3,.35,.25),firm=erase(3,.35,.9)
+  expect(soft.alpha(150,114)).toBeGreaterThan(25)
+  expect(soft.alpha(150,114)).toBeLessThan(110)
+  expect(full.alpha(150,114)).toBeLessThan(8)
+  expect(light.alpha(150,114)).toBeGreaterThan(soft.alpha(150,114))
+  expect(firm.alpha(150,114)).toBeLessThan(soft.alpha(150,114))
+  expect(width(light)).toBeLessThan(width(soft))
+  expect(width(firm)).toBeGreaterThan(width(soft))
+  // A neutral press keeps the v1 width, as the brush does, so the preset size still reads as before.
+  expect(Math.abs(width(soft)-width(erase(1,.35)))).toBeLessThanOrEqual(2)
+  // The flat eraser: v1 wipes a fixed .7, v2 lifts the strength slider's fraction in one pass.
+  const flatErase=(brushVersion:number,opacity:number)=>{const sheet=painted();paintStroke(sheet.ctx,{...flatStroke,id:'flat-erase',tool:'eraser',brush:{...flatStroke.brush,brushVersion,opacity}});return sheet.alpha(90,60)}
+  expect(flatErase(1,.3)).toBe(flatErase(1,1))
+  expect(Math.abs(flatErase(1,1)-Math.round(255*.3))).toBeLessThanOrEqual(2)
+  expect(Math.abs(flatErase(2,.3)-Math.round(255*.7))).toBeLessThanOrEqual(2)
+  expect(flatErase(2,1)).toBe(0)
+})
+test('a round stroke or an eraser between wet strokes splits the wash into two layers',()=>{
+  const dot:PaintStroke={...stroke,id:'dot',samples:[{...stroke.samples[0],x:.9,y:.9}]}
+  expect(openWashStart([wetA,wetB])).toBe(0)
+  expect(openWashStart([dot,wetA,wetB])).toBe(1)
+  expect(openWashStart([wetA,dot,wetB])).toBe(2)
+  expect(openWashStart([wetA,wetB,dot])).toBe(3)
+  expect(openWashStart([wetA,{...wetB,washId:'wash-2'}])).toBe(1)
+  expect(openWashStart([wetA,{...wetB,tool:'eraser'}])).toBe(2)
+  const split=paintAll([wetA,dot,wetB])
+  expect(split.alpha(150,92)).toBeGreaterThan(split.alpha(150,72)+20)
+  // Pixel-identical to painting the two groups and the dot one after another.
+  const manual=createCanvas(300,228),ctx=manual.getContext('2d') as unknown as CanvasRenderingContext2D
+  paintWashGroup(ctx,[wetA]);paintStroke(ctx,dot);paintWashGroup(ctx,[wetB])
+  expect(manual.toBuffer('image/png').equals(split.canvas.toBuffer('image/png'))).toBe(true)
+  const erased=paintAll([wetA,wetB,{...wetB,id:'erase',tool:'eraser'}])
+  expect(erased.alpha(150,112)).toBeLessThan(split.alpha(150,72))
 })

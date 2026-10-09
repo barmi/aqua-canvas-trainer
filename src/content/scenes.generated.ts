@@ -276,7 +276,7 @@ export const sceneAssets = {
     ]
   }
 } as const
-export const sceneAssetVersion = '41d82956e3ffa22b'
+export const sceneAssetVersion = 'a9ef900f2f2c3755'
 export const scenePackFiles = {
   "reference-plant-room": [
     "assets/scenes/reference-plant-room/line-art.svg",
@@ -320,6 +320,15 @@ export const scenePackFiles = {
     "assets/scenes/window-still-life/masks/fruit.svg",
     "assets/scenes/window-still-life/masks/plants.svg",
     "assets/scenes/window-still-life/masks/vase.svg",
+    "assets/scenes/window-still-life/guides/plaster.svg",
+    "assets/scenes/window-still-life/guides/glass.svg",
+    "assets/scenes/window-still-life/guides/sash.svg",
+    "assets/scenes/window-still-life/guides/herb-pot.svg",
+    "assets/scenes/window-still-life/guides/herb-leaves.svg",
+    "assets/scenes/window-still-life/guides/lemons.svg",
+    "assets/scenes/window-still-life/guides/bowl.svg",
+    "assets/scenes/window-still-life/guides/vase-glass.svg",
+    "assets/scenes/window-still-life/guides/eucalyptus.svg",
     "assets/scenes/window-still-life/guides/upper-left-shadow.svg",
     "assets/scenes/window-still-life/guides/upper-left-long-shadow.svg",
     "assets/scenes/window-still-life/guides/upper-left-highlight.svg",

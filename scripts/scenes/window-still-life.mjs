@@ -46,6 +46,16 @@ function clipToFrame(points) {
   return out
 }
 const castClipped = (footprint, dx, dy) => path(polyD(clipToFrame(hull([...footprint, ...footprint.map(([x, y]) => [x + dx, y + dy])]))))
+/**
+ * A named-guide shape with holes: `shape` is painted and every silhouette in `holes` is punched out of it.
+ * A hand-written guide shape is not hidden behind the layers in front of it the way a layer-built one is,
+ * so the layers that overlap the shape are passed as holes.
+ */
+let cutoutCount = 0
+const cutout = (shape, holes) => {
+  const id = `cut${cutoutCount++}`
+  return `<mask id="${id}"><g fill="white" stroke="white" stroke-width="2">${shape}</g><g fill="black" stroke="black" stroke-width="1.6">${holes.join('')}</g></mask><g mask="url(#${id})">${shape}</g>`
+}
 /** Offset a polygon inward using averaged vertex normals (points in screen order). */
 function insetPolygon(points, d) {
   const n = points.length
@@ -194,8 +204,11 @@ function curtainLayer() {
 
 // ---------- 4. basil in a clay pot on the sill ----------
 
+/** The basil's clay pot and its leaves as separate shapes, so the authored guide can tint them apart. */
+const PLANT_PARTS = { pot: '', leaves: '' }
 function plantLayer() {
   const p = pot(648, 318, 66, 64, { rim: .2, lip: 1.1 })
+  PLANT_PARTS.pot = p.shape
   let silhouette = p.shape
   let heavy = p.d
   let medium = '', fine = ''
@@ -212,6 +225,7 @@ function plantLayer() {
     const dir = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI
     const l = leaf(a[0], a[1], len, width, dir + side * between(random, 50, 70), { kind: 'oval', bend: .12 * side, veins: 1, side })
     silhouette += l.shape
+    PLANT_PARTS.leaves += l.shape
     medium += l.d + lineD(a[0], a[1], a[0] + (l.tip[0] - a[0]) * .1, a[1] + (l.tip[1] - a[1]) * .1)
     fine += l.veinsD
   }
@@ -449,10 +463,13 @@ function bowlFrontLayer() {
 // ---------- 11. glass vase with eucalyptus ----------
 
 const VASE = { cx: 868, base: 620, top: 548, rx: 30, mouth: 524 }
+/** The glass body and the eucalyptus leaves as separate shapes for the authored guide. */
+const VASE_PARTS = { glass: '', sprig: '' }
 function vaseLayer() {
   const { cx, base, top, rx, mouth } = VASE
   const body = `M${fmt(cx - rx)} ${fmt(base)}L${fmt(cx - rx)} ${fmt(top)}Q${fmt(cx - rx)} ${fmt(top - 14)} ${fmt(cx - 13)} ${fmt(top - 20)}L${fmt(cx - 13)} ${fmt(mouth)}A13 4 0 1 1 ${fmt(cx + 13)} ${fmt(mouth)}L${fmt(cx + 13)} ${fmt(top - 20)}Q${fmt(cx + rx)} ${fmt(top - 14)} ${fmt(cx + rx)} ${fmt(top)}L${fmt(cx + rx)} ${fmt(base)}A${rx} 7 0 0 1 ${fmt(cx - rx)} ${fmt(base)}Z`
   let silhouette = path(body)
+  VASE_PARTS.glass = path(body)
   let heavy = strokeD(cx - rx, base, cx - rx, top, .5) + `Q${fmt(cx - rx)} ${fmt(top - 14)} ${fmt(cx - 13)} ${fmt(top - 20)}` + strokeD(cx - 13, top - 20, cx - 13, mouth, .4)
   heavy += strokeD(cx + rx, base, cx + rx, top, .5) + `Q${fmt(cx + rx)} ${fmt(top - 14)} ${fmt(cx + 13)} ${fmt(top - 20)}` + strokeD(cx + 13, top - 20, cx + 13, mouth, .4)
   heavy += arcD(cx - rx, base, cx + rx, base, rx, 7, 0, 0)
@@ -475,6 +492,7 @@ function vaseLayer() {
         const r = rotatePt([13, 0], ang)
         const c = [m[0] + r[0], m[1] + r[1]]
         silhouette += ellipse(c[0], c[1], 11, 7.5, ang)
+        VASE_PARTS.sprig += ellipse(c[0], c[1], 11, 7.5, ang)
         mediumEl += ellipse(c[0], c[1], 11, 7.5, ang)
         medium += `M${pt(m)}L${pt([m[0] + r[0] * .3, m[1] + r[1] * .3])}`
         fine += lineD(m[0] + r[0] * .25, m[1] + r[1] * .25, c[0] + r[0] * .7, c[1] + r[1] * .7)
@@ -523,15 +541,33 @@ const facets = {
 }
 
 const [bookBottom, bookTop] = bookLayers()
+const layers = [
+  wallLayer(), sashLayer(), curtainLayer(), plantLayer(), tableLayer(), clothLayer(), bookBottom, bookTop,
+  teapotLayer(), saucerLayer(), cupLayer(), spoonLayer(),
+  bowlBackLayer(), lemonLayer('fruitBack', [[706, 532, 27, 17, -8]]), lemonLayer('fruit', [[674, 550, 28, 18, -22], [736, 548, 28, 18, 16]]), bowlFrontLayer(),
+  vaseLayer(),
+]
+/** Silhouettes of the layers drawn after `id`, which hide hand-written guide shapes the way they hide layers. */
+const inFrontOf = id => layers.slice(layers.findIndex(layer => layer.id === id) + 1).map(layer => layer.silhouette)
+const panes = path(PANES.map(p => rectD(p.x0, p.y0, p.x1 - p.x0, p.y1 - p.y0)).join(''))
 export const scene = {
   id: 'window-still-life',
   indoor: true,
   wash: '#f5ead5',
-  layers: [
-    wallLayer(), sashLayer(), curtainLayer(), plantLayer(), tableLayer(), clothLayer(), bookBottom, bookTop,
-    teapotLayer(), saucerLayer(), cupLayer(), spoonLayer(),
-    bowlBackLayer(), lemonLayer('fruitBack', [[706, 532, 27, 17, -8]]), lemonLayer('fruit', [[674, 550, 28, 18, -22], [736, 548, 28, 18, 16]]), bowlFrontLayer(),
-    vaseLayer(),
+  layers,
+  // Named masks for the authored beginner guide: parts of a region a beginner paints in a different colour.
+  guides: [
+    // the wall and the window wood without the panes, so the wall wash can skip the glass
+    { id: 'plaster', shape: cutout(path(rectD(55, 55, 890, 375)), [panes, ...inFrontOf('sash')]) },
+    // the six panes only: left pale as sky, with the basil and the curtain in front of them cut out
+    { id: 'glass', shape: cutout(panes, inFrontOf('sash')) },
+    { id: 'sash', layers: ['sash'] },
+    { id: 'herb-pot', shape: cutout(PLANT_PARTS.pot, [PLANT_PARTS.leaves]) },
+    { id: 'herb-leaves', shape: PLANT_PARTS.leaves },
+    { id: 'lemons', layers: ['fruitBack', 'fruit'] },
+    { id: 'bowl', layers: ['bowlBack', 'bowlFront'] },
+    { id: 'vase-glass', shape: VASE_PARTS.glass },
+    { id: 'eucalyptus', shape: VASE_PARTS.sprig },
   ],
   regions: [
     { id: 'wall', label: '벽과 창문', material: 'stone', wash: '#e6ebe4', layers: ['wall', 'sash'] },

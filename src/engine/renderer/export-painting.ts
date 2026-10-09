@@ -1,6 +1,6 @@
 import type { PracticeSession } from '../../domain/painting'
 import type { ReadyScene } from '../../domain/scene'
-import { paintStroke } from '../brush/watercolor'
+import { paintStrokes } from '../brush/watercolor'
 
 /** Shared by the PNG export and the example composite; tests stub Image to read from public/. */
 export const loadImage=(url:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{
@@ -12,7 +12,10 @@ export async function renderPractice(session:PracticeSession,scene:ReadyScene):P
   const ctx=canvas.getContext('2d')!;ctx.fillStyle='#fcfaf3';ctx.fillRect(0,0,canvas.width,canvas.height)
   if(session.baseWashVisible)ctx.drawImage(await loadImage(scene.assets.baseWashUrl),0,0,canvas.width,canvas.height)
   const paint=document.createElement('canvas');paint.width=canvas.width;paint.height=canvas.height
-  for(const stroke of session.strokes.slice(0,session.historyCursor))paintStroke(paint.getContext('2d')!,stroke)
+  // The same grouping as the canvas, so a wet wash exports at one density where its strokes overlap; every wash
+  // group of the export shares this one layer instead of allocating its own.
+  const layer=document.createElement('canvas');layer.width=canvas.width;layer.height=canvas.height
+  paintStrokes(paint.getContext('2d')!,session.strokes.slice(0,session.historyCursor),layer)
   ctx.drawImage(paint,0,0)
   ctx.drawImage(await loadImage(scene.assets.lineArtUrl),0,0,canvas.width,canvas.height)
   return canvas
