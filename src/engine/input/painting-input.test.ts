@@ -15,7 +15,7 @@ function harness() {
   }) as unknown as HTMLElement
   const canvas = {getBoundingClientRect:()=>({left:0,top:0,right:1000,bottom:760,width:1000,height:760})} as HTMLCanvasElement
   const complete = vi.fn<(stroke: PaintStroke)=>void>(), viewport = vi.fn()
-  const settings = {brush:{brushId:'watercolor-round',brushVersion:1,color:'#aabbcc',size:18,water:.7,pigment:.5,opacity:.6},tool:'brush' as PaintTool,viewport:{scale:1,x:0,y:0}}
+  const settings = {brush:{brushId:'watercolor-round' as const,brushVersion:1,color:'#aabbcc',size:18,water:.7,pigment:.5,opacity:.6},tool:'brush' as PaintTool,viewport:{scale:1,x:0,y:0}}
   const detach = attachPaintingInput(stage,canvas,{settings:()=>settings,complete,preview:vi.fn(),viewport})
   const emit = (type: string, id: number, pointerType='pen', x=300) => {
     const event = new Event(type,{cancelable:true})

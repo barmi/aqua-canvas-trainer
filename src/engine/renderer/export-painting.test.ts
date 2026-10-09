@@ -20,7 +20,7 @@ test('PNG composition keeps paper opaque, uses only active strokes, and never lo
   vi.stubGlobal('Image',AssetImage)
   vi.stubGlobal('document',{createElement:()=>createCanvas(1000,760)})
   const scene=readyScenes[0],session=createPractice(scene,defaultGuide(scene))
-  const paint={id:'a',layerId:'paint',tool:'brush' as const,seed:2,brush:{brushId:'watercolor-round',brushVersion:1,color:'#f00000',size:30,opacity:1,water:.3,pigment:1},samples:[{x:.5,y:.5,pressure:1,tiltX:0,tiltY:0,elapsedMs:0}]}
+  const paint={id:'a',layerId:'paint',tool:'brush' as const,seed:2,brush:{brushId:'watercolor-round' as const,brushVersion:1,color:'#f00000',size:30,opacity:1,water:.3,pigment:1},samples:[{x:.5,y:.5,pressure:1,tiltX:0,tiltY:0,elapsedMs:0}]}
   const base=await renderPractice(session,scene)
   const undone=await renderPractice({...session,strokes:[paint],historyCursor:0},scene)
   expect(undone.toDataURL()).toBe(base.toDataURL())
