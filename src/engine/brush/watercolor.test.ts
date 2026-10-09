@@ -23,9 +23,10 @@ test('replay preserves the legacy appearance and eraser reduces paint alpha', as
     maximum=Math.max(maximum,delta);total+=delta
   }
   // Linux/macOS antialiasing differs by up to 7 at isolated edge pixels.
-  // Keep the mean bound tight so width/pigment changes still fail the fixture.
+  // Hosted Linux measured mean error .219 on the 0-255 scale; v2 differs by 1.87.
+  // Keep both bounds so real width/pigment changes still fail the fixture.
   expect.soft(maximum).toBeLessThanOrEqual(8)
-  expect.soft(total/actual.length).toBeLessThan(.1)
+  expect.soft(total/actual.length).toBeLessThan(.3)
   const before=first.getContext('2d').getImageData(150,114,1,1).data[3]
   expect(before).toBeGreaterThan(0)
   paintStroke(first.getContext('2d') as unknown as CanvasRenderingContext2D,{...stroke,tool:'eraser'})
