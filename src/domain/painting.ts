@@ -11,8 +11,14 @@ export interface StrokeSample {
   elapsedMs: number
 }
 
+/**
+ * 'watercolor-round': textured round brush whose dabs accumulate; pressure changes width and pigment.
+ * 'flat-wash': wide flat brush for even washes; one stroke covers uniformly however it overlaps itself.
+ */
+export type BrushId = 'watercolor-round' | 'flat-wash'
+
 export interface BrushSettings {
-  brushId: string
+  brushId: BrushId
   brushVersion: number
   color: string
   /** Logical canvas pixels, independent of display scale and devicePixelRatio. */

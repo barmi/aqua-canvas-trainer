@@ -594,6 +594,10 @@ const tea = teaset(table.surface)
 const seat = chair()
 
 const plantLayerIds = layers.map(l => l.id).filter(id => /^(vines|big|shelfP|rubber)/.test(id))
+// The plants region mixes leaves and pots, and the chairs region mixes cushion and frame; the authored
+// guide tints them separately (green leaves, terracotta pots, orange cushion, wooden frame) through named masks.
+const potLayerIds = ['bigBase', 'shelfPots', 'rubberBody']
+const leafLayerIds = plantLayerIds.filter(id => !potLayerIds.includes(id))
 const region = (id, label, material, wash, layers) => ({ id, label, material, wash, layers })
 const dirs = { 'upper-left': [1, .4], 'upper-right': [-1, .4], left: [1.25, .12], right: [-1.25, .12] }
 const shadowsFor = scale => Object.fromEntries(Object.entries(dirs).map(([dir, [kx, ky]]) => [dir,
@@ -614,6 +618,12 @@ export const scene = {
     region('table', '작은 테이블', 'wood', '#e2c9a2', ['table']),
     region('teaset', '찻주전자와 컵', 'ceramic', '#f1e4d2', ['teaset']),
     region('chairs', '접이식 의자', 'fabric', '#f6e9aa', ['chairFar', 'chairSeat', 'chairCushion', 'chairNear']),
+  ],
+  guides: [
+    { id: 'leaves', layers: leafLayerIds },
+    { id: 'pots', layers: potLayerIds },
+    { id: 'cushion', layers: ['chairCushion'] },
+    { id: 'chair-frame', layers: ['chairFar', 'chairSeat', 'chairNear'] },
   ],
   shadows: shadowsFor(1),
   longShadows: shadowsFor(2.6),

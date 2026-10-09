@@ -2,7 +2,8 @@ import type { PracticeSession } from '../../domain/painting'
 import type { ReadyScene } from '../../domain/scene'
 import { paintStroke } from '../brush/watercolor'
 
-const loadImage=(url:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{
+/** Shared by the PNG export and the example composite; tests stub Image to read from public/. */
+export const loadImage=(url:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{
   const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('그림의 배경을 불러오지 못했어요. 연결을 확인해주세요.'));image.src=url
 })
 /** Composition intentionally excludes guide masks, viewport, and cursor. */

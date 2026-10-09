@@ -29,6 +29,13 @@ test('regions resolve from layers, guides are produced per direction, and the co
   const files = sceneDocuments(minimal())
   expect(Object.keys(files).filter(name => name.startsWith('guides/'))).toHaveLength(12)
   expect(files['masks/ball.svg']).toContain('<circle cx="500" cy="380" r="120"/>')
+  // Named guides are extra masks for authored steps: built from layers with the same occlusion as regions.
+  const named = sceneDocuments(minimal({ guides: [{ id: 'backdrop', layers: ['back'] }, { id: 'ball-top', shape: '<rect x="440" y="260" width="120" height="60"/>' }] }))
+  expect(Object.keys(named).filter(name => name.startsWith('guides/'))).toHaveLength(14)
+  expect(named['guides/backdrop.svg']).toContain('<mask id="r-backdrop-0">')
+  expect(named['guides/ball-top.svg']).toContain('<rect x="440" y="260" width="120" height="60"/>')
+  expect(() => minimal({ guides: [{ id: 'left-shadow', layers: ['back'] }] })).toThrow(/guide id/)
+  expect(() => minimal({ guides: [{ id: 'x', layers: ['nope'] }] })).toThrow(/guide x references unknown layer/)
   expect(files['guides/left-shadow.svg']).toContain('M560 300') // left light shades the right-hand facet
   expect(files['guides/left-highlight.svg']).toContain('M400 300')
   expect(() => minimal({ shadows: { left: ' ' } })).toThrow(/missing shadows/)

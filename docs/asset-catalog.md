@@ -41,7 +41,8 @@ public/assets/scenes/reference-plant-room/
 └── guides/
     ├── upper-right-shadow.svg
     ├── upper-right-long-shadow.svg
-    └── upper-right-highlight.svg
+    ├── upper-right-highlight.svg
+    └── leaves.svg · pots.svg · cushion.svg · chair-frame.svg   (이름 있는 가이드 마스크)
 ```
 
 1. 선화와 바탕색을 같은 정면 구도와 논리 크기로 제작한다.
@@ -73,6 +74,9 @@ public/assets/scenes/reference-plant-room/
 - `regions`: 레이어 ID 또는 직접 쓴 실루엣으로 만드는 영역 마스크와 옅은 바탕색.
 - `shadows`·`longShadows`·`facets`: 방향별 투영 그림자, 낮은 빛의 긴 그림자,
   왼쪽·오른쪽 빛에서 그늘지는 면. 그림자를 회전해 재사용하지 않는다.
+- `guides`(선택): 레이어 ID 또는 실루엣으로 만드는 이름 있는 마스크. 한 영역 안에서
+  색이 갈리는 부분(잎과 화분, 쿠션과 나무틀)을 작성 가이드가 따로 물들이고 힌트로
+  보여줄 때 쓴다. `guides/<이름>.svg`로 내보내며 영역 ID는 바꾸지 않는다.
 
 공용 도우미 `scripts/scenes/helpers.mjs`는 잎·화분·창틀·해칭·벽돌·자갈·널빤지·
 투시선·투영 그림자 등을 만든다. 무작위는 시드가 있는 `rng`만 사용해 재생성
