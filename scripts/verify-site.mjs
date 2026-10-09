@@ -1,5 +1,6 @@
 // HTTP deployment verification, independent of browser/Pencil acceptance tests.
 import { setTimeout as delay } from 'node:timers/promises'
+import { fetchWithRetry } from './site-fetch.mjs'
 
 const site=new URL(process.argv[2])
 if(site.protocol!=='https:')throw Error('Provide the HTTPS app URL')
@@ -10,25 +11,27 @@ const fileURL=path=>{
   if(url.origin!==site.origin||!url.pathname.startsWith(site.pathname))throw Error(`Asset escaped app scope: ${path}`)
   return url
 }
+// The whole check must fail with a concrete message well inside the deploy job's 15-minute timeout.
+const deadline=Date.now()+10*60_000
+// An edge can answer 503 for a moment after a deployment or under load; 404 is a missing file (see site-fetch.mjs).
+const onRetry=({url,attempt,wait,status,error})=>console.warn(`retry ${attempt} in ${wait/1000}s for ${url}: ${status??error.message}${error.cause?.code?` (${error.cause.code})`:''}`)
 async function get(path,type,init={}){
-  const response=await fetch(fileURL(path),{signal:AbortSignal.timeout(20000),...init})
+  const response=await fetchWithRetry(fileURL(path),init,{deadline,onRetry})
   if(!response.ok)throw Error(`${path}: HTTP ${response.status}`)
   if(!response.headers.get('content-type')?.includes(type))throw Error(`${path}: unexpected content type ${response.headers.get('content-type')}`)
   return response
 }
 
-// A new deployment can take a short time to reach the Pages CDN.
+// Right after a deployment an edge can still serve the previous build for a short while, so only a stale
+// commit is retried here; transient errors are already retried per request. The CDN ignores query strings.
 let info
-for(let attempt=0;attempt<8;attempt++){
-  try{
-    info=await (await get(`build-info.json?revision=${encodeURIComponent(expected??Date.now())}-${attempt}`,'application/json')).json()
-    if(expected&&info.commit!==expected)throw Error(`Expected ${expected}, received ${info.commit}`)
-    if(info.base!==site.pathname)throw Error(`Wrong site base: ${info.base}`)
-    break
-  }catch(error){
-    if(attempt===7)throw error
-    await delay(10000)
-  }
+for(let attempt=0;;attempt++){
+  info=await (await get('build-info.json','application/json')).json()
+  if(info.base!==site.pathname)throw Error(`Wrong site base: ${info.base}`)
+  if(!expected||info.commit===expected)break
+  if(attempt===7||Date.now()+10000>deadline)throw Error(`Expected ${expected}, received ${info.commit}`)
+  console.warn(`previous build ${info.commit} still served, checking again in 10s`)
+  await delay(10000)
 }
 const html=await (await get('./','text/html')).text()
 if(!html.includes('<div id="root"></div>'))throw Error('App entry point missing')
@@ -44,7 +47,7 @@ for(const path of [manifest.id,manifest.scope,manifest.start_url])if(fileURL(pat
 const packs=await (await get('scene-packs.json','application/json')).json()
 const paths=[...new Set([...files,...manifest.icons.map(icon=>icon.src),...Object.values(packs.scenes).flat()])]
 let next=0
-await Promise.all(Array.from({length:6},async()=>{
+await Promise.all(Array.from({length:4},async()=>{
   while(next<paths.length){
     const path=paths[next++]
     const type=path.endsWith('.svg')?'image/svg+xml':path.endsWith('.png')?'image/png':path.endsWith('.json')?'application/json':path.endsWith('.js')?'javascript':path.endsWith('.css')?'text/css':path.endsWith('.html')?'text/html':'manifest'
