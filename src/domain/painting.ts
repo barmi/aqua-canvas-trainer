@@ -36,6 +36,12 @@ export interface PaintStroke {
   /** Seeded brush texture allows consistent replay, undo, and restoration. */
   seed: number
   samples: readonly StrokeSample[]
+  /**
+   * Flat-wash strokes painted into the same still-wet wash share an id and are composited as one layer:
+   * their coverage is the union, so overlaps keep the same density until the wash dries. Only brush-tool
+   * 'flat-wash' strokes carry it; consecutive strokes with the same id form the layer.
+   */
+  washId?: string
 }
 
 export interface PracticeSession {

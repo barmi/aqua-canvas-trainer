@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReadyScene } from '../../domain/scene'
-import type { BrushId, BrushSettings, PracticeSession } from '../../domain/painting'
+import type { BrushId, BrushSettings, PaintStroke, PracticeSession } from '../../domain/painting'
 import type { GuideDefinition, GuideStep } from '../../domain/guide'
 import { WatercolorRenderer } from '../../engine/renderer/WatercolorRenderer'
 import { attachPaintingInput } from '../../engine/input/painting-input'
@@ -15,10 +15,22 @@ import { GuidePanel, brushNames } from '../guide-panel/GuidePanel'
 import { canvasBlob, downloadBlob, renderPractice } from '../../engine/renderer/export-painting'
 import { renderExample } from '../../engine/renderer/example-composite'
 import { serializePractice } from '../../platform/storage/practice-file'
-import { flatWashBrushVersion, watercolorBrushVersion } from '../../engine/brush/watercolor'
+import { flatWashBrushVersion, isWetStroke, watercolorBrushVersion } from '../../engine/brush/watercolor'
+import { createId } from '../../shared/id'
 
 /** Version stamped on new strokes of each brush type, so replays pick the brush that painted them. */
 export const presetBrushVersion = (brushId: BrushId) => brushId === 'flat-wash' ? flatWashBrushVersion : watercolorBrushVersion
+/**
+ * How long a flat wash stays wet after its last stroke: flat strokes within this window merge into one layer. A
+ * beginner's pace, with room to read the step or look at the example between rows; every completed stroke restarts it.
+ */
+export const wetWashMs = 60_000
+/** The countdown shows only in the last stretch of the window, as a warning rather than a running number. */
+export const wetCountdownMs = 10_000
+/** How long '워시가 말랐어요' stays after the wash dried on its own or by 말리기. */
+export const driedNoticeMs = 3_000
+/** Strokes join the same wash only while colour, opacity and pigment (the layer's tint and density) are unchanged; size and water may vary. */
+const washKey = (brush: BrushSettings) => `${brush.color}|${brush.opacity}|${brush.pigment}`
 const palette = ['#D6B65E','#B97F59','#849568','#5F8277','#70788F','#9D7780','#4B5752','#D9BE9B']
 export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: watercolorBrushVersion, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
 /** The step's whole brush plus its first palette colour, on top of whatever else the user set. */
@@ -96,20 +108,62 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
   const renderer = useRef<WatercolorRenderer | null>(null)
   const settings = useRef({ brush, tool, viewport })
   settings.current = { brush, tool, viewport }
+  // The open wet wash: its id, the brush key it belongs to and when it dries. Null once dry. `wetUntil` mirrors
+  // it for the indicator and is only set by a completed stroke, so the ref alone may hold an id no stroke used yet.
+  const wash = useRef<{ id: string; key: string; until: number } | null>(null)
+  const [wetUntil, setWetUntil] = useState<number | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+  const [driedNotice, setDriedNotice] = useState(false)
+  const noticeTimer = useRef(0)
+  const dry = useCallback(() => { wash.current = null; setWetUntil(null) }, [])
+  /** Drying the beginner did not cause with a stroke (the window elapsed, or 말리기): say so for a moment instead of just removing the badge. */
+  const dryWithNotice = useCallback(() => {
+    dry(); setDriedNotice(true)
+    clearTimeout(noticeTimer.current)
+    noticeTimer.current = window.setTimeout(() => setDriedNotice(false), driedNoticeMs)
+  }, [dry])
+  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+  /** A completed wet stroke keeps its wash open for another window, even if the previous window elapsed mid-stroke. */
+  const wet = useCallback((stroke: PaintStroke) => {
+    const until = Date.now() + wetWashMs
+    wash.current = { id: stroke.washId!, key: washKey(stroke.brush), until }
+    setWetUntil(until); setDriedNotice(false)
+  }, [])
+  /** The wash a new flat brush stroke joins: the open one while it matches the brush and is still wet, else a fresh id. */
+  const washIdFor = useCallback(({ brush, tool }: { brush: BrushSettings; tool: PaintTool }) => {
+    if (tool !== 'brush' || brush.brushId !== 'flat-wash') return undefined
+    const key = washKey(brush), open = wash.current
+    if (open && open.key === key && Date.now() < open.until) return open.id
+    const id = createId()
+    wash.current = { id, key, until: Date.now() + wetWashMs }
+    return id
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current!, stage = stageRef.current!
     const painter = new WatercolorRenderer(canvas)
     renderer.current = painter
     const detach = attachPaintingInput(stage, canvas, {
-      settings: () => settings.current,
+      settings: () => ({ ...settings.current, washId: washIdFor(settings.current) }),
       preview: stroke => painter.showStroke(stroke),
-      complete: stroke => setHistory(previous => appendStroke(previous, stroke)),
+      // A round stroke or an eraser between flat strokes ends the layer, so the wash dries with it.
+      complete: stroke => { if (isWetStroke(stroke)) wet(stroke); else dry(); setHistory(previous => appendStroke(previous, stroke)) },
       viewport: setViewport,
     })
     return () => { detach(); painter.destroy(); renderer.current = null }
-  }, [scene.id])
+  }, [scene.id, washIdFor, wet, dry])
   useEffect(() => { renderer.current?.setHistory(history) }, [history])
+  // The wash dries when the step changes, when the brush no longer matches it (type, colour, opacity or pigment),
+  // and when its window elapses; the countdown ticks once a second only while something is wet.
+  useEffect(() => { dry() }, [guide, stepIndex, dry])
+  useEffect(() => { if (wash.current && (brush.brushId !== 'flat-wash' || wash.current.key !== washKey(brush))) dry() }, [brush, dry])
+  useEffect(() => {
+    if (wetUntil === null) return
+    setNow(Date.now())
+    const timer = setInterval(() => { const time = Date.now(); if (time >= wetUntil) dryWithNotice(); else setNow(time) }, 1000)
+    return () => clearInterval(timer)
+  }, [wetUntil, dryWithNotice])
+  const wetRemaining = wetUntil === null ? 0 : Math.max(0, Math.min(wetWashMs, wetUntil - now))
   useEffect(()=>{
     onSessionChange({...original.current,strokes:history.strokes,historyCursor:history.cursor,baseWashVisible:showBase,guide:{id:guide.id,version:guide.version,currentStepId:guide.steps[stepIndex].id},updatedAt:new Date().toISOString()})
   },[history,showBase,stepIndex,guide,onSessionChange])
@@ -149,7 +203,8 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
         <div className="palette" aria-label="팔레트">{palette.map(color => <button key={color} className={brush.color === color ? 'color selected' : 'color'} style={{background:color}} aria-label={`색상 ${color}`} aria-pressed={brush.color === color} onClick={() => { setBrush({...brush,color});setTool('brush') }} />)}</div>
         <label className="custom-color">나만의 색<input type="color" aria-label="사용자 색상" value={brush.color} onChange={event => setBrush({...brush,color:event.target.value})} /></label>
         <label className="slider-label">붓 크기 <output>{brush.size}</output><input type="range" aria-label="붓 크기" min="2" max="120" value={brush.size} onChange={event => setBrush({...brush,size:Number(event.target.value)})}/></label>
-        {(['water','pigment','opacity'] as const).map(key => <label className="slider-label" key={key}>{({water:'수분',pigment:'안료',opacity:'농도'})[key]}<output>{Math.round(brush[key]*100)}%</output><input type="range" min="0.05" max="1" step="0.05" value={brush[key]} onChange={event => setBrush({...brush,[key]:Number(event.target.value)})}/></label>)}
+        {/* The eraser only has a size and a strength: water and pigment do nothing to it, so they are disabled while it is active. */}
+        {(['water','pigment','opacity'] as const).map(key => <label className="slider-label" key={key}>{({water:'수분',pigment:'안료',opacity:tool==='eraser'?'세기':'농도'})[key]}<output>{Math.round(brush[key]*100)}%</output><input type="range" min="0.05" max="1" step="0.05" value={brush[key]} disabled={tool==='eraser'&&key!=='opacity'} onChange={event => setBrush({...brush,[key]:Number(event.target.value)})}/></label>)}
         <div className="history-buttons"><button disabled={!history.cursor} onClick={() => setHistory(undo)} aria-label="실행 취소">↶ 취소</button><button disabled={history.cursor === history.strokes.length} onClick={() => setHistory(redo)} aria-label="다시 실행">다시 ↷</button></div>
         <label className="check-label"><input type="checkbox" checked={showBase} onChange={event => setShowBase(event.target.checked)}/>기본 바탕색</label>
         <p className="input-hint">가볍게 누르면 얇고 옅게,<br/>꾹 누르면 넓고 진하게 칠해요.<br/>손가락 두 개로 확대·이동해요.<br/>손가락은 색을 남기지 않아요.</p>
@@ -165,9 +220,12 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
           </div>
           {assetError && <div className="canvas-error" role="alert">배경을 불러오지 못했어요. 연결을 확인하고 다시 열어주세요.</div>}
         </div>
+        {/* The wet badge sits on the canvas frame where the beginner is looking, as a sibling of the stage so its button never starts a stroke. */}
+        {wetUntil!==null&&<div className="wet-wash" role="status"><svg viewBox="0 0 12 16" aria-hidden="true"><path d="M6 0C6 0 0 7 0 10.5A6 6 0 0 0 12 10.5C12 7 6 0 6 0Z"/></svg><span>젖은 워시 · 겹쳐 칠해도 같은 농도{wetRemaining<=wetCountdownMs&&<> · <output>{Math.ceil(wetRemaining/1000)}초</output></>}</span><button type="button" className="dry-button" onClick={dryWithNotice}>말리기</button></div>}
+        {wetUntil===null&&driedNotice&&<div className="wash-dried" role="status">워시가 말랐어요 · 이제 겹치면 진해져요</div>}
         <div className="canvas-bottom"><span>나의 작은 수채화 · {history.cursor}번의 붓질 · {offlineLabel}</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
       </div>
-      {guideVisible&&<GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={applyPreset} brush={brush} stepImage={examples.stepImage} finishedImage={examples.finishedImage} exampleAvailable={!examples.failed} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity} showTrace={showTrace} onTrace={setShowTrace} traceOpacity={traceOpacity} onTraceOpacity={setTraceOpacity}/>}
+      {guideVisible&&<GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={applyPreset} brush={brush} tool={tool} stepImage={examples.stepImage} finishedImage={examples.finishedImage} exampleAvailable={!examples.failed} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity} showTrace={showTrace} onTrace={setShowTrace} traceOpacity={traceOpacity} onTraceOpacity={setTraceOpacity}/>}
     </div>
   </section>
 }

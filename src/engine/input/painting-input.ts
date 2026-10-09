@@ -4,7 +4,13 @@ import type { Viewport } from './coordinates'
 import { createId } from '../../shared/id'
 
 export type PaintTool = 'brush' | 'eraser' | 'pan'
-interface Settings { brush: BrushSettings; tool: PaintTool; viewport: Viewport }
+interface Settings {
+  brush: BrushSettings
+  tool: PaintTool
+  viewport: Viewport
+  /** The still-wet wash a new flat-wash brush stroke joins; other brushes and the eraser ignore it. */
+  washId?: string
+}
 interface Callbacks {
   settings: () => Settings
   preview: (stroke: PaintStroke | null) => void
@@ -49,7 +55,8 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
     if (settings.tool === 'pan') { pan = { id: event.pointerId, x: event.clientX, y: event.clientY, viewport: settings.viewport }; return }
     touches.clear(); gesture = null; pan = null
     const samples: StrokeSample[] = []
-    active = { id: event.pointerId, started: event.timeStamp, samples, stroke: { id: createId(), layerId: 'paint', tool: settings.tool, brush: { ...settings.brush }, seed: crypto.getRandomValues(new Uint32Array(1))[0], samples } }
+    const wet = settings.tool === 'brush' && settings.brush.brushId === 'flat-wash' && settings.washId !== undefined
+    active = { id: event.pointerId, started: event.timeStamp, samples, stroke: { id: createId(), layerId: 'paint', tool: settings.tool, brush: { ...settings.brush }, seed: crypto.getRandomValues(new Uint32Array(1))[0], samples, ...(wet ? { washId: settings.washId } : {}) } }
     sample(event)
     event.preventDefault()
   }

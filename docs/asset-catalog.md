@@ -28,7 +28,7 @@ preload="none">`로 사용자의 재생 동작에 따라 읽는다.
 ## 배경 자산 규칙
 
 배경 ID는 카탈로그와 폴더 이름에서 동일하게 사용한다.
-배경 6종을 SVG로 제작했으며 총 139개 파일을 등록했다. 아래는 실제 구조의 예다.
+배경 6종을 SVG로 제작했으며 총 152개 파일을 등록했다. 아래는 실제 구조의 예다.
 
 ```text
 public/assets/scenes/reference-plant-room/
@@ -77,6 +77,10 @@ public/assets/scenes/reference-plant-room/
 - `guides`(선택): 레이어 ID 또는 실루엣으로 만드는 이름 있는 마스크. 한 영역 안에서
   색이 갈리는 부분(잎과 화분, 쿠션과 나무틀)을 작성 가이드가 따로 물들이고 힌트로
   보여줄 때 쓴다. `guides/<이름>.svg`로 내보내며 영역 ID는 바꾸지 않는다.
+  레이어로 만든 가이드는 앞 레이어에 가려지지만 직접 쓴 실루엣은 가려지지 않으므로,
+  창가 정물은 `cutout(shape, holes)`로 겹치는 레이어와 유리 칸을 구멍으로 뚫는다.
+  창가 정물의 이름 있는 가이드: `plaster`(유리를 뺀 벽과 창틀), `glass`(유리 여섯 칸),
+  `sash`(창틀 나무), `herb-pot`·`herb-leaves`, `lemons`·`bowl`, `vase-glass`·`eucalyptus`.
 
 공용 도우미 `scripts/scenes/helpers.mjs`는 잎·화분·창틀·해칭·벽돌·자갈·널빤지·
 투시선·투영 그림자 등을 만든다. 무작위는 시드가 있는 `rng`만 사용해 재생성

@@ -20,7 +20,7 @@ const text = (value: unknown,pattern=/^[a-zA-Z0-9-]+$/,max=128):string => {
 }
 const date = (value:unknown) => {const result=text(value,/^[\dT:.Z+-]+$/,64);if(!Number.isFinite(Date.parse(result)))return fail();return result}
 /** Brush algorithms a file may reference; each version replays with its original appearance. */
-const brushVersions:Record<BrushId,readonly number[]>={'watercolor-round':[1,2],'flat-wash':[1]}
+const brushVersions:Record<BrushId,readonly number[]>={'watercolor-round':[1,2,3],'flat-wash':[1,2]}
 const brushId=(value:unknown):BrushId=>{
   if(typeof value!=='string'||!Object.hasOwn(brushVersions,value))return fail()
   return value as BrushId
@@ -58,6 +58,9 @@ export function validatePractice(value:unknown):PracticeSession {
     if(ids.has(id))return fail();ids.add(id)
     const kind=brushId(brush.brushId)
     if(stroke.layerId!=='paint'||!['brush','eraser'].includes(stroke.tool as string)||!brushVersions[kind].includes(brush.brushVersion as number))return fail()
+    // A wash id groups still-wet flat brush strokes; it means nothing on round strokes or erasers, so it is refused there.
+    if(stroke.washId!==undefined&&(stroke.tool!=='brush'||kind!=='flat-wash'))return fail()
+    const washId=stroke.washId===undefined?undefined:text(stroke.washId)
     if(!Array.isArray(stroke.samples)||!stroke.samples.length||stroke.samples.length>30000)return fail()
     samplesCount+=stroke.samples.length;if(samplesCount>500000)return fail()
     let last=-1
@@ -66,7 +69,7 @@ export function validatePractice(value:unknown):PracticeSession {
       if(elapsedMs<last)return fail();last=elapsedMs
       return {x:number(point.x,0,1),y:number(point.y,0,1),pressure:number(point.pressure,0,1),tiltX:number(point.tiltX,-90,90),tiltY:number(point.tiltY,-90,90),elapsedMs}
     })
-    return {id,layerId:'paint',tool:stroke.tool as 'brush'|'eraser',seed:number(stroke.seed,0,4294967295,true),samples,brush:{brushId:kind,brushVersion:brush.brushVersion as number,color:text(brush.color,/^#[0-9a-fA-F]{6}$/,7),size:number(brush.size,2,120),water:number(brush.water,0,1),pigment:number(brush.pigment,0,1),opacity:number(brush.opacity,0,1)}}
+    return {id,layerId:'paint',tool:stroke.tool as 'brush'|'eraser',seed:number(stroke.seed,0,4294967295,true),samples,brush:{brushId:kind,brushVersion:brush.brushVersion as number,color:text(brush.color,/^#[0-9a-fA-F]{6}$/,7),size:number(brush.size,2,120),water:number(brush.water,0,1),pigment:number(brush.pigment,0,1),opacity:number(brush.opacity,0,1)},...(washId===undefined?{}:{washId})}
   })
   return {schemaVersion:1,id:text(data.id),sceneId:scene.id,sceneVersion:scene.version,guide:guideState,lighting:guide.lighting,rendererVersion:'watercolor-1',baseWashVisible:data.baseWashVisible,createdAt:date(data.createdAt),updatedAt:date(data.updatedAt),strokes,historyCursor:number(data.historyCursor,0,strokes.length,true)}
 }
