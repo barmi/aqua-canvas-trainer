@@ -14,7 +14,13 @@
 3. `npm run build:pages`로 `/aqua-canvas-trainer/` 경로에 맞춰 빌드한다.
 4. `npm run build:verify:pages`로 배포 파일·manifest·캐시·컴파일된 URL을 확인한다.
 5. `dist/`를 Pages artifact로 올리고 `github-pages` 환경에 배포한다.
-6. 공개 HTTPS 주소의 빌드 커밋, JS/CSS·아이콘·121개 SVG·manifest·Worker·영상 응답을 확인한다.
+6. 공개 HTTPS 주소의 빌드 커밋, JS/CSS·아이콘·장면 SVG·manifest·Worker·영상 응답을 확인한다.
+   Pages 엣지가 배포 직후나 부하 중에 파일 하나를 잠시 503으로 돌려줄 수 있어, 각 요청은
+   `scripts/site-fetch.mjs`로 5xx·408·425·429와 네트워크 오류·타임아웃을 2초부터 두 배씩
+   (최대 20초) 기다리며 최대 6번 시도한다. 전체 검사는 10분 안에 끝내며 그 뒤에는 바로 실패한다.
+   404는 CDN이 캐시하고 쿼리 문자열을 무시하므로 재시도하지 않고 빠진 파일로 보고한다.
+   이전 커밋의 `build-info.json`이 보이는 동안은 10초 간격으로 최대 8번 더 확인한다
+   ([#15](https://github.com/barmi/aqua-canvas-trainer/issues/15)).
 
 배포 권한은 deploy job에만 부여한다. 별도 PAT나 배포 비밀값을 저장하지 않고
 GitHub가 제공하는 작업 토큰과 OIDC를 사용한다. 외부 액션은 확인한 릴리스의
@@ -45,6 +51,10 @@ manifest 위치에 상대적이며, Worker 등록·캐시는 저장소 하위 �
 
 - [Actions](https://github.com/barmi/aqua-canvas-trainer/actions/workflows/pages.yml)에서
   `Deploy to GitHub Pages` 실행 결과와 실패한 step의 로그를 확인한다.
+- `Deploy site`까지 성공하고 `Verify published site`만 실패했다면 사이트는 이미 새
+  커밋으로 배포된 상태다. 공개 주소의 `build-info.json`이 main의 커밋과 같은지 확인한다.
+  빌드 후 하루 안에는 `Re-run failed jobs`가 같은 artifact를 다시 배포하고 검증하며,
+  그 뒤에는 `Run workflow`에서 `main`을 선택해 재배포한다.
 - 같은 화면의 `Run workflow`에서 `main`을 선택해 재배포할 수 있다.
 - Pages 설정이 꺼졌거나 변경되면 Source를 GitHub Actions로 되돌린다.
 - 새 코드 배포는 `main`에 커밋·푸시한다. 배포 후 기존 앱의 `새 버전 사용` 안내를
