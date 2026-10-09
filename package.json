@@ -5,6 +5,8 @@
   "type": "module",
   "description": "iPad and Apple Pencil watercolor practice web app",
   "scripts": {
+    "assets:generate": "node scripts/generate-scenes.mjs",
+    "assets:verify": "node scripts/verify-assets.mjs",
     "dev": "vite",
     "dev:ipad": "vite --host 0.0.0.0",
     "typecheck": "tsc --noEmit",

@@ -1,7 +1,9 @@
-import type { PlannedScene } from '../domain/scene'
+import type { PlannedScene, ReadyScene, Scene } from '../domain/scene'
+import { sceneAssets } from './scenes.generated'
+import { assetUrl } from './assets'
 
 /** Production plan only. Add validated ReadyScene entries when assets and guides exist. */
-export const sceneCatalog = [
+const scenePlans = [
   {
     id: 'reference-plant-room',
     title: '의자와 식물이 있는 실내',
@@ -52,3 +54,18 @@ export const sceneCatalog = [
     status: 'planned',
   },
 ] as const satisfies readonly PlannedScene[]
+
+export const sceneCatalog: readonly Scene[] = scenePlans.map((scene): Scene => {
+  if (!(scene.id in sceneAssets)) return scene
+  const data = sceneAssets[scene.id as keyof typeof sceneAssets]
+  const url = (file: string) => assetUrl(`scenes/${scene.id}/${file}`)
+  return {
+    ...scene, status: 'ready', version: 1,
+    canvasSize: { width: 1000, height: 760 },
+    assets: { lineArtUrl: url('line-art.svg'), baseWashUrl: url('base-wash.svg'), thumbnailUrl: url('thumbnail.svg') },
+    regions: data.regions.map(region => ({ ...region, maskUrl: url(`masks/${region.id}.svg`) })),
+    guideIds: [`${scene.id}-starter`],
+  }
+})
+
+export const readyScenes = sceneCatalog.filter((scene): scene is ReadyScene => scene.status === 'ready')

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="760" viewBox="0 0 1000 760" ><g fill="none" stroke="#526253" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M55 55H945V425H55Z"/><path d="M55 425H945V705H55Z"/><path d="M250 420Q410 387 573 430L703 630Q503 673 282 625L184 481Z"/><ellipse cx="417" cy="505" rx="112" ry="30"/><path d="M357 410Q417 390 477 410L464 481Q417 515 370 480Z M477 421Q523 406 519 445Q514 469 473 463"/><ellipse cx="417" cy="410" rx="60" ry="15"/><g transform="translate(699 373) scale(1.45)">
+  <path d="M-30 0H30L23 60Q0 72 -23 60Z M0 0V-125 M0-38L-42-76 M0-62L40-108 M0-83L-27-121"/>
+  <ellipse cx="-36" cy="-83" rx="17" ry="32" transform="rotate(-40 -36 -83)"/>
+  <ellipse cx="35" cy="-111" rx="17" ry="32" transform="rotate(38 35 -111)"/>
+  <ellipse cx="-22" cy="-126" rx="14" ry="30" transform="rotate(-27 -22 -126)"/>
+  <ellipse cx="8" cy="-147" rx="15" ry="32" transform="rotate(13 8 -147)"/>
+  <path d="M-33 5Q0 13 33 5 M-17 15L-13 49"/>
+</g><path d="M110 65H849V359H110Z M135 86H824V334H135Z M480 86V334 M135 210H824 M85 359H876V379H85Z M55 425H945 M55 593H230 M740 593H945 M318 441Q358 488 314 588 M574 467L629 604 M365 414Q419 431 469 414"/><ellipse cx="417" cy="410" rx="48" ry="10"/></g></svg>

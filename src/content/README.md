@@ -1,9 +1,9 @@
 # 콘텐츠 데이터
 
-- `scenes.catalog.ts`: 제작할 배경 6종. 현재 모두 `planned` 상태입니다.
+- `scenes.catalog.ts`: 제작할 배경 6종. 자산이 생성된 배경은 `ready`, 나머지는 `planned` 상태입니다.
 - `lighting-presets.ts`: 새벽·오전·오후·저녁·밤의 교육용 조명 시작값입니다.
 - `references.ts`: 원본 참고 영상의 경로와 출처, 검증 정보입니다.
-- 추후 `guides/`에 `GuideDefinition`을 만족하는 장면별·조명별 가이드를 추가합니다.
+- `guides/`에 `GuideDefinition`을 만족하는 장면별·조명별 가이드를 추가합니다.
 
 새 배경은 자산, 영역 마스크, 대응 가이드까지 준비한 뒤 `ReadyScene`으로
 등록합니다. 이때 카탈로그의 타입을 `readonly Scene[]`로 확장합니다.
