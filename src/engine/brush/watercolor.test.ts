@@ -1,17 +1,29 @@
-import { createCanvas } from '@napi-rs/canvas'
+import { createCanvas, loadImage } from '@napi-rs/canvas'
 import { expect, test } from 'vitest'
-import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import type { PaintStroke } from '../../domain/painting'
 import { paintStroke, pressureResponse } from './watercolor'
 
 const stroke: PaintStroke = {id:'a',layerId:'paint',tool:'brush',seed:42,brush:{brushId:'watercolor-round',brushVersion:1,color:'#627755',size:30,opacity:.7,water:.7,pigment:.6},samples:[{x:.2,y:.5,pressure:.6,tiltX:0,tiltY:0,elapsedMs:0},{x:.8,y:.5,pressure:.7,tiltX:20,tiltY:0,elapsedMs:100}]}
-test('replay restores identical pixels and eraser reduces paint alpha', () => {
+test('replay preserves the legacy appearance and eraser reduces paint alpha', async () => {
   const first=createCanvas(300,228), second=createCanvas(300,228)
   paintStroke(first.getContext('2d') as unknown as CanvasRenderingContext2D,stroke)
   paintStroke(second.getContext('2d') as unknown as CanvasRenderingContext2D,JSON.parse(JSON.stringify(stroke)))
   expect(first.toBuffer('image/png')).toEqual(second.toBuffer('image/png'))
-  // Captured before v2: saved v1 artwork must not change when the app updates.
-  expect(createHash('sha256').update(first.getContext('2d').getImageData(0,0,300,228).data).digest('hex')).toBe('7bfa3b0ab65bd40c572d5e2872d7e4aebbe73cd8f09ea64aca0a21cd6f618355')
+  // Captured before v2. Native raster rounding differs across OS/CPU targets;
+  // compare premultiplied colors so near-transparent pixels do not amplify it.
+  const reference=createCanvas(300,228)
+  reference.getContext('2d').drawImage(await loadImage(await readFile(new URL('./fixtures/watercolor-v1.png',import.meta.url))),0,0)
+  const expected=reference.getContext('2d').getImageData(0,0,300,228).data
+  const actual=first.getContext('2d').getImageData(0,0,300,228).data
+  let maximum=0,total=0
+  for(let i=0;i<actual.length;i++){
+    const alpha=i-i%4+3
+    const delta=Math.abs(i%4===3?actual[i]-expected[i]:(actual[i]*actual[alpha]-expected[i]*expected[alpha])/255)
+    maximum=Math.max(maximum,delta);total+=delta
+  }
+  expect(maximum).toBeLessThanOrEqual(2)
+  expect(total/actual.length).toBeLessThan(.1)
   const before=first.getContext('2d').getImageData(150,114,1,1).data[3]
   expect(before).toBeGreaterThan(0)
   paintStroke(first.getContext('2d') as unknown as CanvasRenderingContext2D,{...stroke,tool:'eraser'})
