@@ -61,7 +61,7 @@ export const sceneCatalog: readonly Scene[] = scenePlans.map((scene): Scene => {
   const data = sceneAssets[scene.id as keyof typeof sceneAssets]
   const url = (file: string) => assetUrl(`scenes/${scene.id}/${file}`)
   return {
-    ...scene, status: 'ready', version: 1,
+    ...scene, status: 'ready', version: 2,
     canvasSize: { width: 1000, height: 760 },
     assets: { lineArtUrl: url('line-art.svg'), baseWashUrl: url('base-wash.svg'), thumbnailUrl: url('thumbnail.svg') },
     regions: data.regions.map(region => ({ ...region, maskUrl: url(`masks/${region.id}.svg`) })),
