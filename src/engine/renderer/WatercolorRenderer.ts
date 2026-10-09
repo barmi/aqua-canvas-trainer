@@ -4,14 +4,13 @@ import { paintStroke } from '../brush/watercolor'
 
 export class WatercolorRenderer {
   private paint: HTMLCanvasElement
-  private preview: HTMLCanvasElement
   private previous: readonly PaintStroke[] = []
   private current: PaintStroke | null = null
   private frame = 0
   constructor(private canvas: HTMLCanvasElement) {
     this.paint = document.createElement('canvas')
-    this.preview = document.createElement('canvas')
-    for (const layer of [this.paint, this.preview]) { layer.width = canvas.width; layer.height = canvas.height }
+    this.paint.width = canvas.width
+    this.paint.height = canvas.height
   }
   setHistory(history: StrokeHistory) {
     const active = history.strokes.slice(0, history.cursor)
@@ -32,16 +31,9 @@ export class WatercolorRenderer {
     const ctx = this.canvas.getContext('2d')!
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     ctx.drawImage(this.paint, 0, 0)
-    if (this.current) {
-      // Erase the composite copy, never the protected scene or committed layer.
-      if (this.current.tool === 'eraser') paintStroke(ctx, this.current)
-      else {
-        const preview = this.preview.getContext('2d')!
-        preview.clearRect(0, 0, this.preview.width, this.preview.height)
-        paintStroke(preview, this.current)
-        ctx.drawImage(this.preview, 0, 0)
-      }
-    }
+    // Use the same blending over the committed copy as a finished stroke.
+    // Drawing on this copy also keeps eraser previews reversible.
+    if (this.current) paintStroke(ctx, this.current)
   }
   destroy() { cancelAnimationFrame(this.frame) }
 }
