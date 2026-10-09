@@ -28,7 +28,7 @@ preload="none">`로 사용자의 재생 동작에 따라 읽는다.
 ## 배경 자산 규칙
 
 배경 ID는 카탈로그와 폴더 이름에서 동일하게 사용한다.
-배경 6종을 SVG로 제작했으며 총 121개 파일을 등록했다. 아래는 실제 구조의 예다.
+배경 6종을 SVG로 제작했으며 총 139개 파일을 등록했다. 아래는 실제 구조의 예다.
 
 ```text
 public/assets/scenes/reference-plant-room/
@@ -36,12 +36,11 @@ public/assets/scenes/reference-plant-room/
 ├── base-wash.svg
 ├── thumbnail.svg
 ├── masks/
-│   ├── chairs.svg
-│   ├── table.svg
-│   ├── plants.svg
-│   └── floor.svg
+│   ├── wall.svg · floor.svg · shelf.svg · plants.svg
+│   └── table.svg · teaset.svg · chairs.svg
 └── guides/
     ├── upper-right-shadow.svg
+    ├── upper-right-long-shadow.svg
     └── upper-right-highlight.svg
 ```
 
@@ -57,8 +56,30 @@ public/assets/scenes/reference-plant-room/
 정리된 배경 자산은 서로 다른 항목으로 관리한다.
 
 장면별로 4방향의 그림자·긴 그림자·밝은 면을 직접 작성한다.
-`scripts/scene-art.mjs`가 원본이며 `npm run assets:generate`가 SVG,
+`scripts/scenes/<id>.mjs`가 원본이고 `scripts/scene-art.mjs`가 이를 모아
+`scripts/scene-svg.mjs`의 계약으로 검증한다. `npm run assets:generate`가 SVG,
 `src/content/scenes.generated.ts`, `public/scene-packs.json`을 함께 만든다.
 생성 결과의 해시를 캐시 이름에 포함해 변경된 마스크를 이전 버전과 섞지 않는다.
-`npm run assets:verify`는 파일 존재·동일 viewBox·영역 ID를 검사한다.
 영상 속 실내는 관찰한 요소를 정면 구도로 다시 구성한 연습용 해석이다.
+
+## 선화 제작 방식
+
+선화는 참고 영상의 펜 드로잉처럼 따라 칠할 수 있는 밀도를 목표로 한다.
+장면 모듈은 다음 구조를 가진다.
+
+- `layers`: 뒤에서 앞으로 나열한 물체. 각 레이어는 닫힌 실루엣과
+  `heavy`(윤곽)·`medium`(구조)·`fine`(질감) 세 굵기의 선을 가진다.
+  생성기는 뒤 레이어의 선을 앞 레이어 실루엣으로 가려 겹침을 처리한다.
+- `regions`: 레이어 ID 또는 직접 쓴 실루엣으로 만드는 영역 마스크와 옅은 바탕색.
+- `shadows`·`longShadows`·`facets`: 방향별 투영 그림자, 낮은 빛의 긴 그림자,
+  왼쪽·오른쪽 빛에서 그늘지는 면. 그림자를 회전해 재사용하지 않는다.
+
+공용 도우미 `scripts/scenes/helpers.mjs`는 잎·화분·창틀·해칭·벽돌·자갈·널빤지·
+투시선·투영 그림자 등을 만든다. 무작위는 시드가 있는 `rng`만 사용해 재생성
+결과가 같다. `npm run assets:preview -- <id>`는 해당 모듈만 읽어
+`.preview/<id>/`에 썸네일·선화·영역 마스크·방향별 가이드 PNG와 지표를 쓴다.
+
+`npm run assets:verify`는 파일 존재·동일 viewBox·모듈과 생성 파일의 일치에
+더해 선화 path 명령 1,500개 이상, 잉크 비율 8–24%, 영역 마스크 0.1% 이상,
+프레임 밖 잉크·마스크·가이드 없음, 선화 파일 450 KB 이하를 검사한다.
+이전 선화를 기준으로 저장한 연습은 장면 버전 2에서 열지 않고 저장소에 보존한다.

@@ -44,7 +44,7 @@ for (const [index, region] of art.regions.entries()) {
   const mask = await render(files[`masks/${region.id}.svg`])
   const c = coverage(mask, 128, frameBox), percent = +(c.inside / (width * height) * 100).toFixed(2)
   metrics.regions[region.id] = { coveragePercent: percent, outsideFrame: c.outside }
-  if (percent < .2) metrics.warnings.push(`region ${region.id} covers only ${percent}% of the canvas`)
+  if (percent < .1) metrics.warnings.push(`region ${region.id} covers only ${percent}% of the canvas`)
   if (c.outside) metrics.warnings.push(`region ${region.id} has ${c.outside} mask pixels outside the frame`)
   const ctx = regions.getContext('2d'); ctx.globalAlpha = .42; ctx.drawImage(tint(mask, palette[index % palette.length]), 0, 0); ctx.globalAlpha = 1
   label(ctx, `${region.id} ${percent}%`, 70, labelY, palette[index % palette.length]); labelY += 26

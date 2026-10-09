@@ -13,9 +13,14 @@ aqua-canvas-trainer/
 │   ├── folder-structure.md
 │   └── asset-catalog.md
 ├── scripts/
-│   ├── scene-art.mjs               6종 장면과 방향별 명암 원본
+│   ├── scenes/<id>.mjs             장면별 레이어·영역·방향별 명암 원본
+│   ├── scenes/helpers.mjs          잎·화분·해칭·투시·그림자 드로잉 도우미
+│   ├── scene-art.mjs               장면 모듈 등록과 계약 검증
+│   ├── scene-svg.mjs               선화·바탕색·마스크·가이드 SVG 생성 규칙
+│   ├── scene-raster.mjs            미리보기·검증용 래스터 변환
+│   ├── preview-scene.mjs           한 장면의 PNG 미리보기와 지표
 │   ├── generate-scenes.mjs         SVG·카탈로그·캐시 목록 생성
-│   ├── verify-assets.mjs           파일·viewBox·영역 참조 검사
+│   ├── verify-assets.mjs           파일·viewBox·일치·복잡도·범위 검사
 │   ├── generate-icons.mjs          PWA 아이콘 생성
 │   ├── pwa-plugin.ts               빌드별 Service Worker 생성
 │   └── verify-build.mjs            배포 파일·캐시 목록·아이콘 검사
@@ -66,7 +71,7 @@ aqua-canvas-trainer/
 - `features`: 화면과 엔진을 연결합니다.
 - `app`: 세션·화면 전환과 플랫폼 상태를 조합합니다.
 
-그림 원본은 `scripts/scene-art.mjs`, 설명·난이도는 `content/scenes.catalog.ts`,
+그림 원본은 `scripts/scenes/<id>.mjs`, 설명·난이도는 `content/scenes.catalog.ts`,
 채색 안내는 `content/guides/`에서 수정합니다. `npm run assets:generate`가
 SVG·TS·오프라인 목록을 함께 갱신합니다. Worker는 빌드에서 `dist/sw.js`로
 생성되며 개발 서버에서는 등록하지 않습니다. 테스트는 모듈 옆에 둡니다.

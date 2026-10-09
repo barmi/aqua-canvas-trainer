@@ -5,7 +5,7 @@ export const sceneAssets = {
     "regions": [
       {
         "id": "wall",
-        "label": "벽과 창가",
+        "label": "벽과 창",
         "material": "stone"
       },
       {
@@ -14,19 +14,29 @@ export const sceneAssets = {
         "material": "wood"
       },
       {
+        "id": "shelf",
+        "label": "식물 선반",
+        "material": "wood"
+      },
+      {
         "id": "plants",
         "label": "화분과 잎",
         "material": "foliage"
       },
       {
-        "id": "chairs",
-        "label": "천 의자",
-        "material": "fabric"
-      },
-      {
         "id": "table",
         "label": "작은 테이블",
         "material": "wood"
+      },
+      {
+        "id": "teaset",
+        "label": "찻주전자와 컵",
+        "material": "ceramic"
+      },
+      {
+        "id": "chairs",
+        "label": "접이식 의자",
+        "material": "fabric"
       }
     ]
   },
@@ -39,6 +49,11 @@ export const sceneAssets = {
         "material": "stone"
       },
       {
+        "id": "curtain",
+        "label": "커튼",
+        "material": "fabric"
+      },
+      {
         "id": "table",
         "label": "나무 테이블",
         "material": "wood"
@@ -49,14 +64,34 @@ export const sceneAssets = {
         "material": "fabric"
       },
       {
+        "id": "books",
+        "label": "책",
+        "material": "other"
+      },
+      {
+        "id": "teapot",
+        "label": "찻주전자",
+        "material": "ceramic"
+      },
+      {
         "id": "cup",
         "label": "컵과 접시",
         "material": "ceramic"
       },
       {
+        "id": "fruit",
+        "label": "과일과 그릇",
+        "material": "other"
+      },
+      {
         "id": "plants",
         "label": "창가 화분",
         "material": "foliage"
+      },
+      {
+        "id": "vase",
+        "label": "유리 화병",
+        "material": "other"
       }
     ]
   },
@@ -77,6 +112,16 @@ export const sceneAssets = {
         "id": "water",
         "label": "호수의 수면",
         "material": "water"
+      },
+      {
+        "id": "dock",
+        "label": "나무 선착장",
+        "material": "wood"
+      },
+      {
+        "id": "boat",
+        "label": "작은 배",
+        "material": "wood"
       },
       {
         "id": "shore",
@@ -104,14 +149,14 @@ export const sceneAssets = {
         "material": "wood"
       },
       {
-        "id": "table",
-        "label": "원형 테이블",
+        "id": "shelf",
+        "label": "벽 선반",
         "material": "wood"
       },
       {
-        "id": "chairs",
-        "label": "카페 의자",
-        "material": "fabric"
+        "id": "lamp",
+        "label": "펜던트 조명",
+        "material": "other"
       },
       {
         "id": "plants",
@@ -119,9 +164,19 @@ export const sceneAssets = {
         "material": "foliage"
       },
       {
-        "id": "lamp",
-        "label": "펜던트 조명",
-        "material": "other"
+        "id": "chairs",
+        "label": "카페 의자",
+        "material": "fabric"
+      },
+      {
+        "id": "table",
+        "label": "원형 테이블",
+        "material": "wood"
+      },
+      {
+        "id": "tableware",
+        "label": "컵과 접시",
+        "material": "ceramic"
       }
     ]
   },
@@ -149,6 +204,16 @@ export const sceneAssets = {
         "material": "foliage"
       },
       {
+        "id": "fence",
+        "label": "울타리",
+        "material": "wood"
+      },
+      {
+        "id": "flowers",
+        "label": "꽃",
+        "material": "foliage"
+      },
+      {
         "id": "bench",
         "label": "길 옆 벤치",
         "material": "wood"
@@ -164,8 +229,8 @@ export const sceneAssets = {
         "material": "other"
       },
       {
-        "id": "road",
-        "label": "골목길",
+        "id": "far-facade",
+        "label": "골목 끝 건물",
         "material": "stone"
       },
       {
@@ -179,14 +244,39 @@ export const sceneAssets = {
         "material": "stone"
       },
       {
+        "id": "road",
+        "label": "골목길",
+        "material": "stone"
+      },
+      {
+        "id": "flags",
+        "label": "만국기",
+        "material": "fabric"
+      },
+      {
+        "id": "crates",
+        "label": "나무 상자",
+        "material": "wood"
+      },
+      {
+        "id": "cafe-set",
+        "label": "카페 테이블과 의자",
+        "material": "wood"
+      },
+      {
         "id": "plants",
         "label": "골목의 화분",
         "material": "foliage"
+      },
+      {
+        "id": "bicycle",
+        "label": "자전거",
+        "material": "other"
       }
     ]
   }
 } as const
-export const sceneAssetVersion = '1e5cb8348b98a159'
+export const sceneAssetVersion = 'b9b6090ce8a7b349'
 export const scenePackFiles = {
   "reference-plant-room": [
     "assets/scenes/reference-plant-room/line-art.svg",
@@ -194,9 +284,11 @@ export const scenePackFiles = {
     "assets/scenes/reference-plant-room/thumbnail.svg",
     "assets/scenes/reference-plant-room/masks/wall.svg",
     "assets/scenes/reference-plant-room/masks/floor.svg",
+    "assets/scenes/reference-plant-room/masks/shelf.svg",
     "assets/scenes/reference-plant-room/masks/plants.svg",
-    "assets/scenes/reference-plant-room/masks/chairs.svg",
     "assets/scenes/reference-plant-room/masks/table.svg",
+    "assets/scenes/reference-plant-room/masks/teaset.svg",
+    "assets/scenes/reference-plant-room/masks/chairs.svg",
     "assets/scenes/reference-plant-room/guides/upper-left-shadow.svg",
     "assets/scenes/reference-plant-room/guides/upper-left-long-shadow.svg",
     "assets/scenes/reference-plant-room/guides/upper-left-highlight.svg",
@@ -215,10 +307,15 @@ export const scenePackFiles = {
     "assets/scenes/window-still-life/base-wash.svg",
     "assets/scenes/window-still-life/thumbnail.svg",
     "assets/scenes/window-still-life/masks/wall.svg",
+    "assets/scenes/window-still-life/masks/curtain.svg",
     "assets/scenes/window-still-life/masks/table.svg",
     "assets/scenes/window-still-life/masks/cloth.svg",
+    "assets/scenes/window-still-life/masks/books.svg",
+    "assets/scenes/window-still-life/masks/teapot.svg",
     "assets/scenes/window-still-life/masks/cup.svg",
+    "assets/scenes/window-still-life/masks/fruit.svg",
     "assets/scenes/window-still-life/masks/plants.svg",
+    "assets/scenes/window-still-life/masks/vase.svg",
     "assets/scenes/window-still-life/guides/upper-left-shadow.svg",
     "assets/scenes/window-still-life/guides/upper-left-long-shadow.svg",
     "assets/scenes/window-still-life/guides/upper-left-highlight.svg",
@@ -239,6 +336,8 @@ export const scenePackFiles = {
     "assets/scenes/lakeside/masks/sky.svg",
     "assets/scenes/lakeside/masks/mountains.svg",
     "assets/scenes/lakeside/masks/water.svg",
+    "assets/scenes/lakeside/masks/dock.svg",
+    "assets/scenes/lakeside/masks/boat.svg",
     "assets/scenes/lakeside/masks/shore.svg",
     "assets/scenes/lakeside/masks/tree.svg",
     "assets/scenes/lakeside/guides/upper-left-shadow.svg",
@@ -260,10 +359,12 @@ export const scenePackFiles = {
     "assets/scenes/cafe-corner/thumbnail.svg",
     "assets/scenes/cafe-corner/masks/wall.svg",
     "assets/scenes/cafe-corner/masks/floor.svg",
-    "assets/scenes/cafe-corner/masks/table.svg",
-    "assets/scenes/cafe-corner/masks/chairs.svg",
-    "assets/scenes/cafe-corner/masks/plants.svg",
+    "assets/scenes/cafe-corner/masks/shelf.svg",
     "assets/scenes/cafe-corner/masks/lamp.svg",
+    "assets/scenes/cafe-corner/masks/plants.svg",
+    "assets/scenes/cafe-corner/masks/chairs.svg",
+    "assets/scenes/cafe-corner/masks/table.svg",
+    "assets/scenes/cafe-corner/masks/tableware.svg",
     "assets/scenes/cafe-corner/guides/upper-left-shadow.svg",
     "assets/scenes/cafe-corner/guides/upper-left-long-shadow.svg",
     "assets/scenes/cafe-corner/guides/upper-left-highlight.svg",
@@ -285,6 +386,8 @@ export const scenePackFiles = {
     "assets/scenes/garden-path/masks/grass.svg",
     "assets/scenes/garden-path/masks/path.svg",
     "assets/scenes/garden-path/masks/trees.svg",
+    "assets/scenes/garden-path/masks/fence.svg",
+    "assets/scenes/garden-path/masks/flowers.svg",
     "assets/scenes/garden-path/masks/bench.svg",
     "assets/scenes/garden-path/guides/upper-left-shadow.svg",
     "assets/scenes/garden-path/guides/upper-left-long-shadow.svg",
@@ -304,10 +407,15 @@ export const scenePackFiles = {
     "assets/scenes/old-town-street/base-wash.svg",
     "assets/scenes/old-town-street/thumbnail.svg",
     "assets/scenes/old-town-street/masks/sky.svg",
-    "assets/scenes/old-town-street/masks/road.svg",
+    "assets/scenes/old-town-street/masks/far-facade.svg",
     "assets/scenes/old-town-street/masks/left-buildings.svg",
     "assets/scenes/old-town-street/masks/right-buildings.svg",
+    "assets/scenes/old-town-street/masks/road.svg",
+    "assets/scenes/old-town-street/masks/flags.svg",
+    "assets/scenes/old-town-street/masks/crates.svg",
+    "assets/scenes/old-town-street/masks/cafe-set.svg",
     "assets/scenes/old-town-street/masks/plants.svg",
+    "assets/scenes/old-town-street/masks/bicycle.svg",
     "assets/scenes/old-town-street/guides/upper-left-shadow.svg",
     "assets/scenes/old-town-street/guides/upper-left-long-shadow.svg",
     "assets/scenes/old-town-street/guides/upper-left-highlight.svg",

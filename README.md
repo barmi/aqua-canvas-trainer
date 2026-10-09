@@ -7,6 +7,7 @@
 ## 구현된 기능
 
 - 배경 6종: 의자와 식물이 있는 실내, 창가 정물, 호숫가, 카페, 정원길, 골목
+- 참고 영상 수준의 펜 선화: 굵기 3단계, 가구·잎·창틀·천·바닥의 구조와 질감, 앞뒤 겹침 처리
 - 새벽·오전·오후·저녁·밤, 장면별 광원, 4방향의 지원 조합 264개
 - 바탕 → 큰 색면 → 그림자 → 겹칠하기 → 디테일의 5단계 가이드
 - 필압·기울기, 수분·안료·농도, 지우개, 실행 취소·다시 실행
@@ -85,14 +86,21 @@ npm run build:verify
 [#8](https://github.com/barmi/aqua-canvas-trainer/issues/8)로 분리했으며 HTTPS 설치·오프라인은 추가 확인 대상입니다.
 [실기기 체크리스트](docs/device-test-checklist.md)에 절차와 기록표가 있습니다.
 
-SVG 원본은 `scripts/scene-art.mjs`에서 편집하고 다음 명령으로 재생성합니다.
-장면 자산을 바꿀 때 생성된 TS와 오프라인 목록도 함께 커밋합니다.
+그림 원본은 장면별 모듈 `scripts/scenes/<id>.mjs`에 있고 공용 드로잉 도우미는
+`scripts/scenes/helpers.mjs`입니다. 레이어를 뒤에서 앞으로 쌓으면 앞 물체의
+실루엣이 뒤 선을 가립니다. 한 장면만 PNG로 미리 보며 다듬은 뒤 전체를
+재생성합니다. 장면 자산을 바꿀 때 생성된 SVG·TS와 오프라인 목록도 함께 커밋합니다.
 
 ```sh
+npm run assets:preview -- reference-plant-room
 npm run assets:generate
 npm run assets:verify
 npm run icons:generate
 ```
+
+미리보기는 `.preview/<id>/`에 선화·영역 마스크·방향별 그림자 이미지와 지표를
+씁니다. `assets:verify`는 파일 존재·viewBox·생성 결과 일치에 더해 선화의 path
+명령 수, 잉크 비율, 영역 마스크 범위, 프레임 밖 좌표를 검사합니다.
 
 ## 구조와 문서
 
