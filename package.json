@@ -17,7 +17,8 @@
     "build": "npm run typecheck && vite build",
     "build:pages": "npm run typecheck && vite build --mode github-pages",
     "preview": "vite preview",
-    "preview:pages": "vite preview --mode github-pages"
+    "preview:pages": "vite preview --mode github-pages",
+    "assets:preview": "node scripts/preview-scene.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

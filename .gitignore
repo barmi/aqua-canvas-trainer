@@ -43,3 +43,6 @@ coverage/
 *.swp
 *.swo
 *~
+
+# Scene preview renders
+.preview/
