@@ -1,5 +1,16 @@
 import type { PaintStroke } from '../../domain/painting'
 
+export const watercolorBrushVersion = 2
+
+/** Keep the neutral .55 fallback unchanged while expanding the pen's range. */
+export function pressureResponse(pressure: number) {
+  const relative = Math.min(1, Math.max(0, pressure)) / .55
+  return {
+    radiusScale: .1 + .5075 * relative ** 1.6,
+    opacityScale: .2 + .8 * relative ** 1.2,
+  }
+}
+
 export function seededRandom(seed: number) {
   let state = seed >>> 0
   return () => {
@@ -11,14 +22,16 @@ export function seededRandom(seed: number) {
   }
 }
 
-export interface Dab { x: number; y: number; radius: number; aspect: number }
+export interface Dab { x: number; y: number; radius: number; aspect: number; opacityScale: number }
 export function strokeDabs(stroke: PaintStroke, width: number, height: number): Dab[] {
   const random = seededRandom(stroke.seed)
   const dabs: Dab[] = []
-  const radiusAt = (pressure: number) => stroke.brush.size * (0.25 + pressure * 0.65)
+  // Saved v1 strokes retain their original rendering; only new brush strokes use v2.
+  const enhancedPressure = stroke.brush.brushVersion === 2 && stroke.tool === 'brush'
+  const radiusAt = (pressure: number) => stroke.brush.size * (enhancedPressure ? pressureResponse(pressure).radiusScale : .25 + pressure * .65)
   const add = (x: number, y: number, pressure: number, tilt: number) => {
     const r = radiusAt(pressure)
-    dabs.push({ x: x + (random() - .5) * r * .12, y: y + (random() - .5) * r * .12, radius: r * (.9 + random() * .2), aspect: 1 + Math.abs(tilt) / 160 })
+    dabs.push({ x: x + (random() - .5) * r * .12, y: y + (random() - .5) * r * .12, radius: r * (.9 + random() * .2), aspect: 1 + Math.abs(tilt) / 160, opacityScale: enhancedPressure ? pressureResponse(pressure).opacityScale : 1 })
   }
   const first = stroke.samples[0]
   if (!first) return dabs
@@ -45,7 +58,7 @@ export function paintStroke(ctx: CanvasRenderingContext2D, stroke: PaintStroke) 
     ctx.save()
     ctx.translate(dab.x, dab.y)
     ctx.scale(dab.aspect, 1)
-    ctx.globalAlpha = stroke.tool === 'eraser' ? .7 : stroke.brush.opacity * (.035 + stroke.brush.pigment * .17)
+    ctx.globalAlpha = stroke.tool === 'eraser' ? .7 : stroke.brush.opacity * (.035 + stroke.brush.pigment * .17) * dab.opacityScale
     ctx.beginPath(); ctx.arc(0, 0, dab.radius, 0, Math.PI * 2); ctx.fill()
     if (stroke.tool !== 'eraser') {
       ctx.globalAlpha *= .38

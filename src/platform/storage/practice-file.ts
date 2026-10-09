@@ -47,7 +47,7 @@ export function validatePractice(value:unknown):PracticeSession {
     const stroke=object(value),brush=object(stroke.brush)
     const id=text(stroke.id)
     if(ids.has(id))return fail();ids.add(id)
-    if(stroke.layerId!=='paint'||!['brush','eraser'].includes(stroke.tool as string)||brush.brushId!=='watercolor-round'||brush.brushVersion!==1)return fail()
+    if(stroke.layerId!=='paint'||!['brush','eraser'].includes(stroke.tool as string)||brush.brushId!=='watercolor-round'||(brush.brushVersion!==1&&brush.brushVersion!==2))return fail()
     if(!Array.isArray(stroke.samples)||!stroke.samples.length||stroke.samples.length>30000)return fail()
     samplesCount+=stroke.samples.length;if(samplesCount>500000)return fail()
     let last=-1
@@ -56,7 +56,7 @@ export function validatePractice(value:unknown):PracticeSession {
       if(elapsedMs<last)return fail();last=elapsedMs
       return {x:number(point.x,0,1),y:number(point.y,0,1),pressure:number(point.pressure,0,1),tiltX:number(point.tiltX,-90,90),tiltY:number(point.tiltY,-90,90),elapsedMs}
     })
-    return {id,layerId:'paint',tool:stroke.tool as 'brush'|'eraser',seed:number(stroke.seed,0,4294967295,true),samples,brush:{brushId:'watercolor-round',brushVersion:1,color:text(brush.color,/^#[0-9a-fA-F]{6}$/,7),size:number(brush.size,2,65),water:number(brush.water,0,1),pigment:number(brush.pigment,0,1),opacity:number(brush.opacity,0,1)}}
+    return {id,layerId:'paint',tool:stroke.tool as 'brush'|'eraser',seed:number(stroke.seed,0,4294967295,true),samples,brush:{brushId:'watercolor-round',brushVersion:brush.brushVersion,color:text(brush.color,/^#[0-9a-fA-F]{6}$/,7),size:number(brush.size,2,65),water:number(brush.water,0,1),pigment:number(brush.pigment,0,1),opacity:number(brush.opacity,0,1)}}
   })
   return {schemaVersion:1,id:text(data.id),sceneId:scene.id,sceneVersion:scene.version,guide:guideState,lighting:guide.lighting,rendererVersion:'watercolor-1',baseWashVisible:data.baseWashVisible,createdAt:date(data.createdAt),updatedAt:date(data.updatedAt),strokes,historyCursor:number(data.historyCursor,0,strokes.length,true)}
 }

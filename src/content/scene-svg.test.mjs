@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-import { commandCount, lineArtContent, normalize, sceneDocuments, svg } from './scene-svg.mjs'
-import { coverage, renderSvg } from './scene-raster.mjs'
-import { castD, hatchD, path, rectD, rng } from './scenes/helpers.mjs'
+import { commandCount, lineArtContent, normalize, sceneDocuments, svg } from '../../scripts/scene-svg.mjs'
+import { coverage, renderSvg } from '../../scripts/scene-raster.mjs'
+import { castD, hatchD, path, rectD, rng } from '../../scripts/scenes/helpers.mjs'
 
 const minimal = (overrides = {}) => normalize({
   id: 'demo', indoor: true, wash: '#fff',

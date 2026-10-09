@@ -13,9 +13,10 @@ import type { GuideChoice } from '../lighting-controls/LightingControls'
 import { GuidePanel } from '../guide-panel/GuidePanel'
 import { canvasBlob, downloadBlob, renderPractice } from '../../engine/renderer/export-painting'
 import { serializePractice } from '../../platform/storage/practice-file'
+import { watercolorBrushVersion } from '../../engine/brush/watercolor'
 
 const palette = ['#D6B65E','#B97F59','#849568','#5F8277','#70788F','#9D7780','#4B5752','#D9BE9B']
-export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: 1, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
+export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: watercolorBrushVersion, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
 
 export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChange, onLightingChange, offlineLabel='온라인 연습' }: { scene: ReadyScene; initialSession: PracticeSession; onBack: () => void; onSessionChange: (session: PracticeSession) => void; onLightingChange: (choice: GuideChoice) => void; offlineLabel?:string }) {
   const original = useRef(initialSession)
@@ -86,7 +87,7 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
         {(['water','pigment','opacity'] as const).map(key => <label className="slider-label" key={key}>{({water:'수분',pigment:'안료',opacity:'농도'})[key]}<output>{Math.round(brush[key]*100)}%</output><input type="range" min="0.05" max="1" step="0.05" value={brush[key]} onChange={event => setBrush({...brush,[key]:Number(event.target.value)})}/></label>)}
         <div className="history-buttons"><button disabled={!history.cursor} onClick={() => setHistory(undo)} aria-label="실행 취소">↶ 취소</button><button disabled={history.cursor === history.strokes.length} onClick={() => setHistory(redo)} aria-label="다시 실행">다시 ↷</button></div>
         <label className="check-label"><input type="checkbox" checked={showBase} onChange={event => setShowBase(event.target.checked)}/>기본 바탕색</label>
-        <p className="input-hint">펜과 마우스로 칠해요.<br/>손가락 두 개로 확대·이동해요.<br/>손가락은 색을 남기지 않아요.</p>
+        <p className="input-hint">가볍게 누르면 얇고 옅게,<br/>꾹 누르면 넓고 진하게 칠해요.<br/>손가락 두 개로 확대·이동해요.<br/>손가락은 색을 남기지 않아요.</p>
       </aside>
       <div className="canvas-column">
         <div className={`canvas-stage tool-${tool}`} ref={stageRef}>

@@ -43,7 +43,8 @@ test('draw, change lighting, and remount restores the original practice without 
   expect(document.querySelector('.canvas-bottom')?.textContent).toContain('0번의 붓질')
   await act(async()=>{await new Promise(resolve=>setTimeout(resolve,500))})
   const repository=createPracticeRepository()
-  expect((await repository.list()).some(value=>(value as {strokes:unknown[]}).strokes.length===1)).toBe(true)
+  const painted=(await repository.list()).find(value=>(value as {strokes:unknown[]}).strokes.length===1) as {strokes:{brush:{brushVersion:number}}[]}|undefined
+  expect(painted?.strokes[0].brush.brushVersion).toBe(2)
   await act(async()=>root!.unmount());root=null
   document.body.innerHTML=''
   await mount()
