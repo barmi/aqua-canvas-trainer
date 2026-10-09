@@ -27,6 +27,7 @@ test('draw, change lighting, and remount restores the original practice without 
   HTMLElement.prototype.hasPointerCapture=()=>false
   HTMLElement.prototype.releasePointerCapture=()=>{}
   await mount()
+  expect(document.querySelectorAll('.scene-card:not(:disabled)')).toHaveLength(6)
   await click(document.querySelector('.scene-card:not(:disabled)'))
   const stage=document.querySelector('.canvas-stage')!
   await act(async()=>{

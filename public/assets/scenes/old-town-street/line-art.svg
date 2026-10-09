@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="760" viewBox="0 0 1000 760" ><g fill="none" stroke="#526253" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M55 55H945V705H55Z"/><path d="M448 325H582L945 705H55Z"/><path d="M55 180L213 74L381 205V586L55 705Z M381 274L454 233V506L381 586Z"/><path d="M615 210L793 106L945 183V705L615 571Z M571 287L615 265V571L571 508Z"/><g transform="translate(181 581) scale(0.65)">
+  <path d="M-30 0H30L23 60Q0 72 -23 60Z M0 0V-125 M0-38L-42-76 M0-62L40-108 M0-83L-27-121"/>
+  <ellipse cx="-36" cy="-83" rx="17" ry="32" transform="rotate(-40 -36 -83)"/>
+  <ellipse cx="35" cy="-111" rx="17" ry="32" transform="rotate(38 35 -111)"/>
+  <ellipse cx="-22" cy="-126" rx="14" ry="30" transform="rotate(-27 -22 -126)"/>
+  <ellipse cx="8" cy="-147" rx="15" ry="32" transform="rotate(13 8 -147)"/>
+  <path d="M-33 5Q0 13 33 5 M-17 15L-13 49"/>
+</g><g transform="translate(795 576) scale(0.75)">
+  <path d="M-30 0H30L23 60Q0 72 -23 60Z M0 0V-125 M0-38L-42-76 M0-62L40-108 M0-83L-27-121"/>
+  <ellipse cx="-36" cy="-83" rx="17" ry="32" transform="rotate(-40 -36 -83)"/>
+  <ellipse cx="35" cy="-111" rx="17" ry="32" transform="rotate(38 35 -111)"/>
+  <ellipse cx="-22" cy="-126" rx="14" ry="30" transform="rotate(-27 -22 -126)"/>
+  <ellipse cx="8" cy="-147" rx="15" ry="32" transform="rotate(13 8 -147)"/>
+  <path d="M-33 5Q0 13 33 5 M-17 15L-13 49"/>
+</g><path d="M55 180L213 74L381 205 M71 185L213 93L366 207 M213 94V636 M615 210L793 106L945 183 M793 107V644 M86 270L174 218V338L86 382Z M106 258V371 M86 325L174 279 M244 232L335 269V369L244 344Z M290 251V357 M244 287L335 321 M88 442L171 406V607L88 637Z M108 447L150 430V600L108 614Z M653 266L754 227V357L653 375Z M703 247V366 M653 323L754 293 M822 252L901 281V388L822 369Z M861 268V378 M822 312L901 336 M651 439L750 420V589L651 555Z M672 446L727 437V571L672 552Z M411 297V359L438 347V286Z M589 324V373L608 382V315Z M444 566L601 571 M363 626L664 638 M224 692L777 691 M427 587L385 623 M512 572L518 635 M585 611L627 690 M328 655L287 693"/></g></svg>

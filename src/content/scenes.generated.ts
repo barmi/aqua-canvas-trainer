@@ -89,5 +89,100 @@ export const sceneAssets = {
         "material": "foliage"
       }
     ]
+  },
+  "cafe-corner": {
+    "indoor": true,
+    "regions": [
+      {
+        "id": "wall",
+        "label": "카페 벽과 창문",
+        "material": "stone"
+      },
+      {
+        "id": "floor",
+        "label": "카페 바닥",
+        "material": "wood"
+      },
+      {
+        "id": "table",
+        "label": "원형 테이블",
+        "material": "wood"
+      },
+      {
+        "id": "chairs",
+        "label": "카페 의자",
+        "material": "fabric"
+      },
+      {
+        "id": "plants",
+        "label": "창가의 초록",
+        "material": "foliage"
+      },
+      {
+        "id": "lamp",
+        "label": "펜던트 조명",
+        "material": "other"
+      }
+    ]
+  },
+  "garden-path": {
+    "indoor": false,
+    "regions": [
+      {
+        "id": "sky",
+        "label": "나무 사이 하늘",
+        "material": "other"
+      },
+      {
+        "id": "grass",
+        "label": "풀과 작은 잎",
+        "material": "foliage"
+      },
+      {
+        "id": "path",
+        "label": "정원의 길",
+        "material": "stone"
+      },
+      {
+        "id": "trees",
+        "label": "큰 나무와 가지",
+        "material": "foliage"
+      },
+      {
+        "id": "bench",
+        "label": "길 옆 벤치",
+        "material": "wood"
+      }
+    ]
+  },
+  "old-town-street": {
+    "indoor": false,
+    "regions": [
+      {
+        "id": "sky",
+        "label": "골목 위 하늘",
+        "material": "other"
+      },
+      {
+        "id": "road",
+        "label": "골목길",
+        "material": "stone"
+      },
+      {
+        "id": "left-buildings",
+        "label": "왼쪽 건물",
+        "material": "stone"
+      },
+      {
+        "id": "right-buildings",
+        "label": "오른쪽 건물",
+        "material": "stone"
+      },
+      {
+        "id": "plants",
+        "label": "골목의 화분",
+        "material": "foliage"
+      }
+    ]
   }
 } as const
