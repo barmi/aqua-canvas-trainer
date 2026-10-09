@@ -11,6 +11,8 @@ import { directions } from '../../content/lighting-options'
 import { LightingControls } from '../lighting-controls/LightingControls'
 import type { GuideChoice } from '../lighting-controls/LightingControls'
 import { GuidePanel } from '../guide-panel/GuidePanel'
+import { canvasBlob, downloadBlob, renderPractice } from '../../engine/renderer/export-painting'
+import { serializePractice } from '../../platform/storage/practice-file'
 
 const palette = ['#D6B65E','#B97F59','#849568','#5F8277','#70788F','#9D7780','#4B5752','#D9BE9B']
 export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: 1, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
@@ -29,6 +31,8 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
   const [history, setHistory] = useState(()=>({strokes:initialSession.strokes,cursor:initialSession.historyCursor}))
   const [showBase, setShowBase] = useState(initialSession.baseWashVisible)
   const [assetError, setAssetError] = useState(false)
+  const [exporting,setExporting]=useState(false)
+  const [exportError,setExportError]=useState('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const renderer = useRef<WatercolorRenderer | null>(null)
@@ -60,8 +64,16 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
     return () => window.removeEventListener('keydown', keydown)
   }, [])
 
+  const snapshot=():PracticeSession=>({...initialSession,strokes:history.strokes,historyCursor:history.cursor,baseWashVisible:showBase,guide:{id:guide.id,version:guide.version,currentStepId:guide.steps[stepIndex].id}})
+  const exportPng=async()=>{
+    setExporting(true);setExportError('')
+    try{downloadBlob(await canvasBlob(await renderPractice(snapshot(),scene)),`${scene.id}-${initialSession.id.slice(0,8)}.png`)}
+    catch(error){setExportError(error instanceof Error?error.message:'그림을 저장하지 못했어요.')}
+    finally{setExporting(false)}
+  }
   return <section className="workspace">
-    <div className="workspace-heading"><div><button className="text-button" onClick={onBack}>← 풍경 고르기</button><h1>{scene.title}</h1></div><p className="muted">옅게 시작해서, 한 겹씩 쌓아보세요.</p></div>
+    <div className="workspace-heading"><div><button className="text-button" onClick={onBack}>← 풍경 고르기</button><h1>{scene.title}</h1></div><div className="export-actions"><button className="secondary-button" disabled={exporting} onClick={()=>void exportPng()}>{exporting?'그림 준비 중…':'PNG 저장'}</button><button className="secondary-button" onClick={()=>downloadBlob(new Blob([serializePractice(snapshot())],{type:'application/json'}),`${scene.id}-${initialSession.id.slice(0,8)}.aqua.json`)}>연습 파일 백업</button></div></div>
+    {exportError&&<p className="error-message" role="alert">{exportError}</p>}
     <div className="workspace-grid">
       <aside className="tools-panel" aria-label="그리기 도구">
         <LightingControls scene={scene} choice={choice} onChange={onLightingChange}/><p className="lighting-note">빛을 바꾸면 지금 그림을 보관하고 새 연습을 시작해요.</p><p className="panel-label">나의 붓</p>
