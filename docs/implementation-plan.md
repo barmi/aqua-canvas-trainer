@@ -4,7 +4,7 @@
 커밋으로 `main`에 푸시한다. 실제 기기의 확인과 자동 검증은 구분한다.
 
 - [x] [#1 배경 3종과 선택 라이브러리](https://github.com/barmi/aqua-canvas-trainer/issues/1)
-- [ ] [#2 Pencil 수채화 엔진과 작업 공간](https://github.com/barmi/aqua-canvas-trainer/issues/2)
+- [x] [#2 Pencil 수채화 엔진과 작업 공간](https://github.com/barmi/aqua-canvas-trainer/issues/2)
 - [ ] [#3 조명·방향·시간대별 가이드](https://github.com/barmi/aqua-canvas-trainer/issues/3)
 - [ ] [#4 자동 저장·복구·목록·내보내기](https://github.com/barmi/aqua-canvas-trainer/issues/4)
 - [ ] [#5 카페·정원·골목 확장](https://github.com/barmi/aqua-canvas-trainer/issues/5)
