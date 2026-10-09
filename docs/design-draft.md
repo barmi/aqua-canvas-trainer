@@ -4,7 +4,8 @@
 - 상태: 초안 v0.2 — MVP 구현 상태 반영
 - 대상: iPad Safari와 Apple Pencil을 중심으로 하는 웹 앱
 - 구현: 배경 6종, 펜 엔진, 지원 조명 264조합, 5단계 가이드, 저장·내보내기, PWA
-- 남은 검증: 실제 브라우저 UI와 iPad/Pencil 수용 테스트 ([절차](device-test-checklist.md))
+- 실기기: 사용자 iPad/Pencil 기본 동작 확인으로 #7 종료. 필압 체감 개선은 #8
+- 추가 검증: 수정 후 필압 체감, HTTPS 설치·오프라인, 성능 수치 ([기록](device-test-checklist.md))
 
 ## 1. 제품의 목표
 

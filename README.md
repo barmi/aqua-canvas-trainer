@@ -80,8 +80,9 @@ npm run build:verify
 
 자동 검증은 입력·좌표·이력·시드 재생·가이드 조합·JSON·IndexedDB·PNG 합성,
 격리된 React 화면 흐름, Service Worker 이벤트를 다룹니다. jsdom 테스트는
-실제 Safari나 Apple Pencil의 검증을 대신하지 않습니다. 실기기 필압·팜 접촉·
-지연·설치 확인은 [#7](https://github.com/barmi/aqua-canvas-trainer/issues/7)에 남아 있습니다.
+실제 Safari나 Apple Pencil의 검증을 대신하지 않습니다. 사용자의 iPad/Pencil 기본 동작 확인으로
+[#7](https://github.com/barmi/aqua-canvas-trainer/issues/7)을 종료했습니다. 필압 체감 개선은
+[#8](https://github.com/barmi/aqua-canvas-trainer/issues/8)로 분리했으며 HTTPS 설치·오프라인은 추가 확인 대상입니다.
 [실기기 체크리스트](docs/device-test-checklist.md)에 절차와 기록표가 있습니다.
 
 SVG 원본은 `scripts/scene-art.mjs`에서 편집하고 다음 명령으로 재생성합니다.

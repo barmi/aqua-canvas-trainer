@@ -9,7 +9,7 @@
 - [x] [#4 자동 저장·복구·목록·내보내기](https://github.com/barmi/aqua-canvas-trainer/issues/4)
 - [x] [#5 카페·정원·골목 확장](https://github.com/barmi/aqua-canvas-trainer/issues/5)
 - [x] [#6 PWA·오프라인·iPad 레이아웃](https://github.com/barmi/aqua-canvas-trainer/issues/6)
-- [ ] [#7 iPad/Pencil 실기기 수용 테스트](https://github.com/barmi/aqua-canvas-trainer/issues/7)
+- [x] [#7 iPad/Pencil 실기기 수용 테스트](https://github.com/barmi/aqua-canvas-trainer/issues/7)
 
 초기 자산은 영역과 좌표를 정확히 맞출 수 있는 직접 작성한 SVG로 제작한다.
 첫 실내 장면은 영상에서 관찰한 의자·식물·노란 워시를 바탕으로 정면
@@ -18,5 +18,10 @@
 소프트웨어 검증은 입력·좌표·붓 재생·이력·지원 조합·저장·PNG·격리된 DOM
 흐름·Service Worker 이벤트를 다룬다. 정적 SVG 121개와 배포 캐시 목록을
 별도로 검사한다. 실제 브라우저 자동화는 도구의 로컬 URL 정책으로 실행하지
-못했고 실제 iPad/Pencil도 아직 검증하지 않았다.
+못했다. 실기기 결과는 아래 사용자 수용 기록을 따른다.
 [실기기 체크리스트](device-test-checklist.md)에 남은 수용 조건을 기록한다.
+
+2026-10-09 사용자가 실제 iPad/Pencil에서 안내된 1–7번 기본 동작의 정상을
+보고했다. #7을 사용자 요청으로 종료하고, 압력에 따른 차이가 작다는 개선은
+[#8](https://github.com/barmi/aqua-canvas-trainer/issues/8)에 분리했다.
+기기 세부 정보·정량 성능·HTTPS PWA 설치·오프라인 결과는 제공되지 않았다.
