@@ -11,7 +11,7 @@
 - [x] [#6 PWA·오프라인·iPad 레이아웃](https://github.com/barmi/aqua-canvas-trainer/issues/6)
 - [x] [#7 iPad/Pencil 실기기 수용 테스트](https://github.com/barmi/aqua-canvas-trainer/issues/7)
 - [x] [#8 Apple Pencil 필압 응답 확대](https://github.com/barmi/aqua-canvas-trainer/issues/8)
-- [ ] [#10 참고 영상 수준의 상세 배경 선화](https://github.com/barmi/aqua-canvas-trainer/issues/10)
+- [x] [#10 참고 영상 수준의 상세 배경 선화](https://github.com/barmi/aqua-canvas-trainer/issues/10)
 
 초기 자산은 영역과 좌표를 정확히 맞출 수 있는 직접 작성한 SVG로 제작한다.
 첫 실내 장면은 영상에서 관찰한 의자·식물·노란 워시를 바탕으로 정면
