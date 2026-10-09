@@ -25,3 +25,10 @@
 보고했다. #7을 사용자 요청으로 종료하고, 압력에 따른 차이가 작다는 개선은
 [#8](https://github.com/barmi/aqua-canvas-trainer/issues/8)에 분리했다.
 기기 세부 정보·정량 성능·HTTPS PWA 설치·오프라인 결과는 제공되지 않았다.
+
+- [x] [#8 Pencil 필압 두께·농도 차이 확대](https://github.com/barmi/aqua-canvas-trainer/issues/8)
+
+새 붓 버전에서 두께와 안료를 함께 변화시키고 기존 작품은 이전 붓 버전으로
+재생한다. [필압 개선 설계·비교·재확인 방법](pressure-response.md)에 기록한다.
+자동 검증은 테스트 30개와 타입·빌드·배포 파일 검사이며 수정 후 기기 체감은
+사용자 재확인 대상이다.

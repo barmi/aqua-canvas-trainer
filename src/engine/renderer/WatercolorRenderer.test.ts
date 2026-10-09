@@ -15,9 +15,9 @@ function harness(){
   const flush=()=>{const pending=frames;frames=[];pending.forEach(callback=>callback(0))}
   return {canvas,renderer,flush}
 }
-test('overlapping wet stroke has identical pixels before and after committing',()=>{
+test.each([1,2])('brush v%s overlapping stroke has identical pixels before and after committing',version=>{
   const {canvas,renderer,flush}=harness()
-  const second={...stroke,id:'second',seed:103,brush:{...stroke.brush,color:'#70788F'}}
+  const second={...stroke,id:'second',seed:103,brush:{...stroke.brush,brushVersion:version,color:'#70788F'}}
   renderer.setHistory({strokes:[stroke],cursor:1});flush()
   renderer.showStroke(second);flush()
   const preview=canvas.toBuffer('image/png')
