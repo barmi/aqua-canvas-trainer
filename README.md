@@ -4,6 +4,8 @@
 선화와 옅은 바탕색에서 시작해 설명, 팔레트, 밝은 면과 그림자 힌트를
 보며 직접 칠합니다. 계정이나 서버 없이 기기에 연습을 저장합니다.
 
+[웹 앱 열기](https://barmi.github.io/aqua-canvas-trainer/) · [배포 안내](docs/github-pages.md)
+
 ## 구현된 기능
 
 - 배경 6종: 의자와 식물이 있는 실내, 창가 정물, 호숫가, 카페, 정원길, 골목
@@ -66,6 +68,11 @@ PWA는 프로덕션 빌드의 HTTPS 주소 또는 개발 컴퓨터의 localhost�
 `dev:ipad`의 LAN HTTP 주소는 그리기 확인용입니다. iPad 설치·오프라인 확인에는
 프로덕션 빌드를 HTTPS 정적 호스팅으로 제공해야 합니다.
 
+GitHub Pages는 `main` 푸시 시 검사 후 자동 배포합니다. 배포용 경로를 로컬에서
+확인하려면 `npm run build:pages`, `npm run build:verify:pages`,
+`npm run preview:pages`를 사용합니다. 자세한 내용은 [배포 안내](docs/github-pages.md)에 있습니다.
+개발 주소에서 저장한 연습은 JSON으로 백업한 뒤 공개 사이트에서 가져옵니다.
+
 온라인에서 풍경을 열고 `오프라인 준비됨`을 확인한 뒤 연결 없이 연습합니다.
 앱 셸과 선택한 풍경의 선화·바탕색·마스크·가이드를 버전별로 캐시합니다.
 참고 영상은 오프라인 대상에서 제외합니다. 새 버전 안내를 누르면 완료된
@@ -110,6 +117,7 @@ src/platform/           IndexedDB 자동 저장과 PWA 캐시
 ```
 
 - [구현 진행표와 GitHub 이슈](docs/implementation-plan.md)
+- [GitHub Pages 배포·재배포·iPad 설치](docs/github-pages.md)
 - [설계 문서](docs/design-draft.md)
 - [폴더 구조](docs/folder-structure.md)
 - [자산 목록과 제작 규칙](docs/asset-catalog.md)

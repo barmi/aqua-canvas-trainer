@@ -5,16 +5,19 @@
   "type": "module",
   "description": "iPad and Apple Pencil watercolor practice web app",
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run --dir src",
     "assets:generate": "node scripts/generate-scenes.mjs",
     "assets:verify": "node scripts/verify-assets.mjs",
     "icons:generate": "node scripts/generate-icons.mjs",
     "build:verify": "node scripts/verify-build.mjs",
+    "build:verify:pages": "node scripts/verify-build.mjs --base=/aqua-canvas-trainer/",
     "dev": "vite",
     "dev:ipad": "vite --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && vite build",
-    "preview": "vite preview"
+    "build:pages": "npm run typecheck && vite build --mode github-pages",
+    "preview": "vite preview",
+    "preview:pages": "vite preview --mode github-pages"
   },
   "engines": {
     "node": ">=22.12.0"

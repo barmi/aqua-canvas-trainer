@@ -32,3 +32,8 @@
 재생한다. [필압 개선 설계·비교·재확인 방법](pressure-response.md)에 기록한다.
 자동 검증은 테스트 30개와 타입·빌드·배포 파일 검사이며 수정 후 기기 체감은
 사용자 재확인 대상이다.
+
+- [x] [#9 GitHub Pages 자동 배포와 github.io 경로](https://github.com/barmi/aqua-canvas-trainer/issues/9)
+
+전용 빌드·미리보기, main 자동 배포, 빌드 커밋과 공개 자산의 HTTP 검사를 추가했다.
+[배포·재배포·연습 이전 방법](github-pages.md)에 절차를 기록한다.
