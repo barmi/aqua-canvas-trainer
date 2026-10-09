@@ -12,7 +12,7 @@ let checked = 0
 for (const art of artworks) {
   const root = `public/assets/scenes/${art.id}`
   const documents = sceneDocuments(art)
-  const expected = ['line-art.svg', 'base-wash.svg', 'thumbnail.svg', ...art.regions.map(r => `masks/${r.id}.svg`), ...DIRECTIONS.flatMap(d => [`guides/${d}-shadow.svg`, `guides/${d}-long-shadow.svg`, `guides/${d}-highlight.svg`])]
+  const expected = ['line-art.svg', 'base-wash.svg', 'thumbnail.svg', ...art.regions.map(r => `masks/${r.id}.svg`), ...art.guides.map(g => `guides/${g.id}.svg`), ...DIRECTIONS.flatMap(d => [`guides/${d}-shadow.svg`, `guides/${d}-long-shadow.svg`, `guides/${d}-highlight.svg`])]
   for (const file of expected) {
     let content
     try { content = await readFile(`${root}/${file}`, 'utf8') } catch { problems.push(`${art.id}: missing ${file}`); continue }
@@ -31,12 +31,12 @@ for (const art of artworks) {
     if (mask.percent < limits.minRegionPercent) problems.push(`${art.id}: region ${region.id} covers only ${mask.percent}%`)
     if (mask.outside) problems.push(`${art.id}: region ${region.id} mask spills outside the paper frame`)
   }
-  for (const direction of DIRECTIONS) for (const kind of ['shadow', 'long-shadow', 'highlight']) {
-    const guide = coverage(await renderSvg(documents[`guides/${direction}-${kind}.svg`]), 128)
-    if (!guide.inside) problems.push(`${art.id}: guide ${direction}-${kind} is empty`)
-    if (guide.outside) problems.push(`${art.id}: guide ${direction}-${kind} spills outside the paper frame`)
+  for (const name of [...art.guides.map(g => g.id), ...DIRECTIONS.flatMap(d => [`${d}-shadow`, `${d}-long-shadow`, `${d}-highlight`])]) {
+    const guide = coverage(await renderSvg(documents[`guides/${name}.svg`]), 128)
+    if (!guide.inside) problems.push(`${art.id}: guide ${name} is empty`)
+    if (guide.outside) problems.push(`${art.id}: guide ${name} spills outside the paper frame`)
   }
-  console.log(`${art.id}: ${commands} commands, ${ink.percent}% ink, ${art.regions.length} regions`)
+  console.log(`${art.id}: ${commands} commands, ${ink.percent}% ink, ${art.regions.length} regions, ${art.guides.length} named guides`)
 }
 if (problems.length) { console.error(problems.join('\n')); process.exit(1) }
 console.log(`Verified ${checked} aligned scene assets across ${artworks.length} scenes`)

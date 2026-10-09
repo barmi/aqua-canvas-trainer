@@ -1,6 +1,7 @@
-import type { PaintStroke } from '../../domain/painting'
+import type { BrushSettings, PaintStroke, StrokeSample } from '../../domain/painting'
 
 export const watercolorBrushVersion = 2
+export const flatWashBrushVersion = 1
 
 /** Keep the neutral .55 fallback unchanged while expanding the pen's range. */
 export function pressureResponse(pressure: number) {
@@ -50,7 +51,67 @@ export function strokeDabs(stroke: PaintStroke, width: number, height: number): 
   return dabs
 }
 
+/** Stroke calls per flat wash; each is a full path stroke, so keep this small for the preview frame budget. */
+export const flatWashPasses = 8
+
+/**
+ * Flat wash profile: the same path stroked `flatWashPasses` times, widest and palest first, so the edge
+ * feathers along a smoothstep while the interior stays exactly `interior` however the path overlaps itself.
+ * The opacity slider reads as coverage (pigment adds a little), so one pass of a guide preset lands on the
+ * step's example tint instead of needing overlapping rows. `edge` is the fraction of the width that feathers
+ * (both sides together) and grows with water.
+ */
+export function flatWashProfile(brush: Pick<BrushSettings, 'size' | 'water' | 'pigment' | 'opacity'>) {
+  const edge = .12 + brush.water * .33
+  const interior = brush.opacity * (.55 + brush.pigment * .45)
+  const passes: { width: number; alpha: number }[] = []
+  let previous = 0
+  for (let k = 1; k <= flatWashPasses; k++) {
+    const t = k / flatWashPasses
+    const cumulative = interior * t * t * (3 - 2 * t)
+    passes.push({ width: brush.size * (1 - edge * (k - 1) / (flatWashPasses - 1)), alpha: 1 - (1 - cumulative) / (1 - previous) })
+    previous = cumulative
+  }
+  return { interior, edge, passes }
+}
+
+/** One smooth path through the samples: quadratic curves through segment midpoints; a single sample is a zero-length segment (a round-capped dot). */
+function traceFlatPath(ctx: CanvasRenderingContext2D, samples: readonly StrokeSample[], width: number, height: number) {
+  const x = (i: number) => samples[i].x * width, y = (i: number) => samples[i].y * height
+  const last = samples.length - 1
+  ctx.beginPath()
+  ctx.moveTo(x(0), y(0))
+  for (let i = 1; i < last; i++) ctx.quadraticCurveTo(x(i), y(i), (x(i) + x(i + 1)) / 2, (y(i) + y(i + 1)) / 2)
+  ctx.lineTo(x(last), y(last))
+}
+
+/** Constant width, no texture, pressure ignored: a beginner gets predictable, even coverage. */
+function paintFlatStroke(ctx: CanvasRenderingContext2D, stroke: PaintStroke) {
+  if (!stroke.samples.length) return
+  ctx.save()
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  traceFlatPath(ctx, stroke.samples, ctx.canvas.width, ctx.canvas.height)
+  if (stroke.tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.strokeStyle = '#000000'
+    ctx.lineWidth = stroke.brush.size
+    ctx.globalAlpha = .7
+    ctx.stroke()
+  } else {
+    ctx.globalCompositeOperation = 'multiply'
+    ctx.strokeStyle = stroke.brush.color
+    for (const pass of flatWashProfile(stroke.brush).passes) {
+      ctx.lineWidth = pass.width
+      ctx.globalAlpha = pass.alpha
+      ctx.stroke()
+    }
+  }
+  ctx.restore()
+}
+
 export function paintStroke(ctx: CanvasRenderingContext2D, stroke: PaintStroke) {
+  if (stroke.brush.brushId === 'flat-wash') return paintFlatStroke(ctx, stroke)
   ctx.save()
   ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'multiply'
   ctx.fillStyle = stroke.tool === 'eraser' ? '#000000' : stroke.brush.color

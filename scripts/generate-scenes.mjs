@@ -12,7 +12,7 @@ for (const art of artworks) {
   const files = sceneDocuments(art)
   for (const [name, content] of Object.entries(files)) await writeFile(`${root}/${name}`, content)
   generated[art.id] = { indoor: art.indoor, regions: art.regions.map(({ id, label, material }) => ({ id, label, material })) }
-  packs[art.id] = ['line-art.svg', 'base-wash.svg', 'thumbnail.svg', ...art.regions.map(region => `masks/${region.id}.svg`), ...DIRECTIONS.flatMap(direction => [`guides/${direction}-shadow.svg`, `guides/${direction}-long-shadow.svg`, `guides/${direction}-highlight.svg`])].map(file => `assets/scenes/${art.id}/${file}`)
+  packs[art.id] = ['line-art.svg', 'base-wash.svg', 'thumbnail.svg', ...art.regions.map(region => `masks/${region.id}.svg`), ...art.guides.map(guide => `guides/${guide.id}.svg`), ...DIRECTIONS.flatMap(direction => [`guides/${direction}-shadow.svg`, `guides/${direction}-long-shadow.svg`, `guides/${direction}-highlight.svg`])].map(file => `assets/scenes/${art.id}/${file}`)
 }
 const hash = createHash('sha256')
 for (const file of Object.values(packs).flat().sort()) { hash.update(file); hash.update(await readFile(`public/${file}`)) }

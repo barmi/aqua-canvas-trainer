@@ -51,6 +51,21 @@ for (const [index, region] of art.regions.entries()) {
 }
 await save('regions', regions)
 
+if (art.guides.length) {
+  const named = createCanvas(width, height); { const ctx = named.getContext('2d'); ctx.drawImage(paper, 0, 0) }
+  let y = 80
+  for (const [index, guide] of art.guides.entries()) {
+    const mask = await render(files[`guides/${guide.id}.svg`])
+    const c = coverage(mask, 128, frameBox), percent = +(c.inside / (width * height) * 100).toFixed(2)
+    metrics.guides[guide.id] = { coveragePercent: percent, outsideFrame: c.outside }
+    if (!c.inside) metrics.warnings.push(`guide ${guide.id} is empty`)
+    if (c.outside) metrics.warnings.push(`guide ${guide.id} has ${c.outside} mask pixels outside the frame`)
+    const ctx = named.getContext('2d'); ctx.globalAlpha = .42; ctx.drawImage(tint(mask, palette[index % palette.length]), 0, 0); ctx.globalAlpha = 1
+    label(ctx, `${guide.id} ${percent}%`, 70, y, palette[index % palette.length]); y += 26
+  }
+  await save('named-guides', named)
+}
+
 for (const direction of DIRECTIONS) {
   for (const [suffix, file] of [['', `guides/${direction}-shadow.svg`], ['-long', `guides/${direction}-long-shadow.svg`]]) {
     const shadow = await render(files[file]), highlight = await render(files[`guides/${direction}-highlight.svg`])

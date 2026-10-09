@@ -18,6 +18,8 @@ export const svg = (content, attrs = '') => `<svg xmlns="http://www.w3.org/2000/
  *            behind the silhouettes of the layers after it, which gives hand-drawn hidden-line behaviour for free.
  *   regions: [{ id, label, material, wash, layers: [layerId] | shape }] masks for guides and the base wash.
  *            A region built from layers is likewise hidden behind later layers that are not part of it.
+ *   guides?: [{ id, layers: [layerId] | shape }] named masks for authored step guides (e.g. the pots inside the
+ *            plants region), written to guides/<id>.svg beside the per-direction shadow and highlight guides.
  *   shadows, longShadows?, facets: { left, right } authored per direction as before
  * Legacy scenes may use `details` instead of layers; region shapes are then stroked as outlines.
  */
@@ -27,13 +29,17 @@ export function normalize(input) {
   art.layers = (art.layers ?? []).map(layer => ({ outline: true, occludes: true, lines: {}, ...layer }))
   if (new Set(art.layers.map(l => l.id)).size !== art.layers.length) throw new Error(`Duplicate layer id in ${art.id}`)
   const layerById = Object.fromEntries(art.layers.map(layer => [layer.id, layer]))
-  art.regions = (art.regions ?? []).map(region => {
-    for (const id of region.layers ?? []) if (!layerById[id]) throw new Error(`${art.id}: region ${region.id} references unknown layer ${id}`)
-    const shape = region.shape ?? (region.layers ?? []).map(id => layerById[id].silhouette).join('')
-    if (!shape) throw new Error(`${art.id}: region ${region.id} has no shape`)
-    return { ...region, shape, layers: region.shape ? undefined : region.layers }
-  })
+  const resolveShape = (item, kind) => {
+    for (const id of item.layers ?? []) if (!layerById[id]) throw new Error(`${art.id}: ${kind} ${item.id} references unknown layer ${id}`)
+    const shape = item.shape ?? (item.layers ?? []).map(id => layerById[id].silhouette).join('')
+    if (!shape) throw new Error(`${art.id}: ${kind} ${item.id} has no shape`)
+    return { ...item, shape, layers: item.shape ? undefined : item.layers }
+  }
+  art.regions = (art.regions ?? []).map(region => resolveShape(region, 'region'))
   if (new Set(art.regions.map(r => r.id)).size !== art.regions.length) throw new Error(`Duplicate region in ${art.id}`)
+  art.guides = (art.guides ?? []).map(guide => resolveShape(guide, 'guide'))
+  if (new Set(art.guides.map(g => g.id)).size !== art.guides.length) throw new Error(`Duplicate guide in ${art.id}`)
+  for (const guide of art.guides) if (!/^[a-z][a-z0-9-]*$/.test(guide.id) || /-(shadow|long-shadow|highlight)$/.test(guide.id)) throw new Error(`${art.id}: guide id ${guide.id} must be a kebab-case name that does not end like a direction guide`)
   art.shadows = art.shadows ?? {}
   for (const direction of DIRECTIONS) if (!art.shadows[direction]) throw new Error(`${art.id}: missing shadows.${direction}`)
   art.longShadows = { ...art.shadows, ...(art.longShadows ?? {}) }
@@ -114,6 +120,7 @@ export function sceneDocuments(art) {
     'thumbnail.svg': svg(thumbnailContent(art)),
   }
   for (const region of art.regions) files[`masks/${region.id}.svg`] = svg(maskContent(art, region))
+  for (const guide of art.guides) files[`guides/${guide.id}.svg`] = svg(maskContent(art, guide))
   for (const direction of DIRECTIONS) {
     files[`guides/${direction}-shadow.svg`] = svg(`<g fill="white">${art.shadows[direction]}${shadedSide(art, direction)}</g>`)
     files[`guides/${direction}-long-shadow.svg`] = svg(`<g fill="white">${art.longShadows[direction]}${shadedSide(art, direction)}</g>`)
