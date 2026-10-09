@@ -17,7 +17,7 @@ import { serializePractice } from '../../platform/storage/practice-file'
 const palette = ['#D6B65E','#B97F59','#849568','#5F8277','#70788F','#9D7780','#4B5752','#D9BE9B']
 export const defaultBrush: BrushSettings = { brushId: 'watercolor-round', brushVersion: 1, color: palette[0], size: 18, opacity: .6, water: .7, pigment: .45 }
 
-export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChange, onLightingChange }: { scene: ReadyScene; initialSession: PracticeSession; onBack: () => void; onSessionChange: (session: PracticeSession) => void; onLightingChange: (choice: GuideChoice) => void }) {
+export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChange, onLightingChange, offlineLabel='온라인 연습' }: { scene: ReadyScene; initialSession: PracticeSession; onBack: () => void; onSessionChange: (session: PracticeSession) => void; onLightingChange: (choice: GuideChoice) => void; offlineLabel?:string }) {
   const original = useRef(initialSession)
   const choice: GuideChoice = {time:initialSession.lighting.timeOfDay,kind:initialSession.lighting.primary.kind,direction:directions.find(value=>value.angle===initialSession.lighting.primary.azimuthDeg)?.id ?? 'upper-right'}
   const guide = useMemo(()=>resolveGuide(scene,choice.time,choice.kind,choice.direction),[scene,choice.time,choice.kind,choice.direction])
@@ -31,6 +31,8 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
   const [history, setHistory] = useState(()=>({strokes:initialSession.strokes,cursor:initialSession.historyCursor}))
   const [showBase, setShowBase] = useState(initialSession.baseWashVisible)
   const [assetError, setAssetError] = useState(false)
+  const [leftHanded,setLeftHanded]=useState(()=>{try{return localStorage.getItem('aqua-handedness')==='left'}catch{return false}})
+  const [guideVisible,setGuideVisible]=useState(true)
   const [exporting,setExporting]=useState(false)
   const [exportError,setExportError]=useState('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -72,9 +74,9 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
     finally{setExporting(false)}
   }
   return <section className="workspace">
-    <div className="workspace-heading"><div><button className="text-button" onClick={onBack}>← 풍경 고르기</button><h1>{scene.title}</h1></div><div className="export-actions"><button className="secondary-button" disabled={exporting} onClick={()=>void exportPng()}>{exporting?'그림 준비 중…':'PNG 저장'}</button><button className="secondary-button" onClick={()=>downloadBlob(new Blob([serializePractice(snapshot())],{type:'application/json'}),`${scene.id}-${initialSession.id.slice(0,8)}.aqua.json`)}>연습 파일 백업</button></div></div>
+    <div className="workspace-heading"><div><button className="text-button" onClick={onBack}>← 풍경 고르기</button><h1>{scene.title}</h1></div><div className="export-actions"><button className="secondary-button" aria-pressed={leftHanded} onClick={()=>{const value=!leftHanded;setLeftHanded(value);try{localStorage.setItem('aqua-handedness',value?'left':'right')}catch{/* Layout still works in memory. */}}}>{leftHanded?'왼손 배치':'오른손 배치'}</button><button className="secondary-button" aria-expanded={guideVisible} onClick={()=>setGuideVisible(!guideVisible)}>{guideVisible?'가이드 접기':'가이드 열기'}</button><button className="secondary-button" disabled={exporting} onClick={()=>void exportPng()}>{exporting?'그림 준비 중…':'PNG 저장'}</button><button className="secondary-button" onClick={()=>downloadBlob(new Blob([serializePractice(snapshot())],{type:'application/json'}),`${scene.id}-${initialSession.id.slice(0,8)}.aqua.json`)}>연습 파일 백업</button></div></div>
     {exportError&&<p className="error-message" role="alert">{exportError}</p>}
-    <div className="workspace-grid">
+    <div className={`workspace-grid${leftHanded?' left-handed':''}${!guideVisible?' guide-collapsed':''}`}>
       <aside className="tools-panel" aria-label="그리기 도구">
         <LightingControls scene={scene} choice={choice} onChange={onLightingChange}/><p className="lighting-note">빛을 바꾸면 지금 그림을 보관하고 새 연습을 시작해요.</p><p className="panel-label">나의 붓</p>
         <div className="tool-buttons">{(['brush','eraser','pan'] as const).map(value => <button key={value} className={tool === value ? 'selected' : ''} aria-pressed={tool === value} onClick={() => setTool(value)}>{({brush:'붓',eraser:'지우개',pan:'이동'})[value]}</button>)}</div>
@@ -96,9 +98,9 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
           </div>
           {assetError && <div className="canvas-error" role="alert">배경을 불러오지 못했어요. 연결을 확인하고 다시 열어주세요.</div>}
         </div>
-        <div className="canvas-bottom"><span>나의 작은 수채화 · {history.cursor}번의 붓질</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
+        <div className="canvas-bottom"><span>나의 작은 수채화 · {history.cursor}번의 붓질 · {offlineLabel}</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
       </div>
-      <GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={current=>{setBrush({...brush,...current.suggestedBrush,color:current.palette[0].color});setTool('brush')}} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity}/>
+      {guideVisible&&<GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={current=>{setBrush({...brush,...current.suggestedBrush,color:current.palette[0].color});setTool('brush')}} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity}/>}
     </div>
   </section>
 }

@@ -1,13 +1,12 @@
 # 콘텐츠 데이터
 
-- `scenes.catalog.ts`: 제작할 배경 6종. 자산이 생성된 배경은 `ready`, 나머지는 `planned` 상태입니다.
-- `lighting-presets.ts`: 새벽·오전·오후·저녁·밤의 교육용 조명 시작값입니다.
-- `references.ts`: 원본 참고 영상의 경로와 출처, 검증 정보입니다.
-- `guides/`에 `GuideDefinition`을 만족하는 장면별·조명별 가이드를 추가합니다.
+- `scenes.catalog.ts`: 자산이 준비된 6종의 설명·난이도·목표.
+- `scenes.generated.ts`: 영역·경로·콘텐츠 해시·캐시 목록. 생성 파일입니다.
+- `lighting-presets.ts`: 새벽·오전·오후·저녁·밤의 시작 조명.
+- `lighting-options.ts`: 실내·야외와 시간대에 따른 지원 광원·4방향.
+- `guides/resolve-guide.ts`: 장면·방향별 명암·시간대 팔레트로 만드는 5단계 가이드.
+- `references.ts`: 영상 경로·출처·파일 정보.
 
-새 배경은 자산, 영역 마스크, 대응 가이드까지 준비한 뒤 `ReadyScene`으로
-등록합니다. 이때 카탈로그의 타입을 `readonly Scene[]`로 확장합니다.
-파일이 없는 배경에 임시 URL을 연결하거나 연습 가능 상태를 부여하지 않습니다.
-
-조명 프리셋은 모든 장면에 무조건 적용되는 완성 가이드가 아닙니다.
-장면별로 대응 가이드가 있는 조명 조합을 확인한 뒤 연습 화면에 제시합니다.
+SVG 원본은 `scripts/scene-art.mjs`에 있습니다. `npm run assets:generate`로
+이미지·TS·캐시 목록을 함께 갱신합니다. 방향별 명암은 직접 작성하며 그림자를
+단순 회전하지 않습니다. 지원 조합 264개의 자산·가이드 참조를 테스트합니다.

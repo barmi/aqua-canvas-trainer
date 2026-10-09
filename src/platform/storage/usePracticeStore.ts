@@ -27,6 +27,7 @@ export function usePracticeStore() {
       }finally{inFlight.current--}
     }
     if(!pending.current.size&&!inFlight.current&&mounted.current){setStatus('saved');setError('')}
+    return !pending.current.size&&!inFlight.current
   },[])
   useEffect(()=>{
     let cancelled=false

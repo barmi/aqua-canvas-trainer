@@ -23,26 +23,26 @@
 
 앱의 경로·출처 정보는 `src/content/references.ts`에 있다. 영상은 JavaScript에
 번들링하지 않고 정적 파일로 제공하며, `<video controls playsInline
-preload="metadata">`로 사용자의 재생 동작에 따라 읽는다.
+preload="none">`로 사용자의 재생 동작에 따라 읽는다.
 
-## 제작할 배경의 자산 규칙
+## 배경 자산 규칙
 
 배경 ID는 카탈로그와 폴더 이름에서 동일하게 사용한다.
-다음은 **향후 자산 배치 예시**이며 현재 영상만 등록되어 있다.
+배경 6종을 SVG로 제작했으며 총 121개 파일을 등록했다. 아래는 실제 구조의 예다.
 
 ```text
 public/assets/scenes/reference-plant-room/
 ├── line-art.svg
-├── base-wash.png
-├── thumbnail.webp
+├── base-wash.svg
+├── thumbnail.svg
 ├── masks/
-│   ├── chair-front.png
-│   ├── chair-back.png
-│   ├── plants.png
-│   └── floor.png
+│   ├── chairs.svg
+│   ├── table.svg
+│   ├── plants.svg
+│   └── floor.svg
 └── guides/
-    ├── afternoon-upper-right-shadow.png
-    └── afternoon-upper-right-highlight.png
+    ├── upper-right-shadow.svg
+    └── upper-right-highlight.svg
 ```
 
 1. 선화와 바탕색을 같은 정면 구도와 논리 크기로 제작한다.
@@ -55,3 +55,10 @@ public/assets/scenes/reference-plant-room/
 영상에서 프레임을 추출하더라도 손·붓·원근 왜곡이 남아 있는 프레임은
 그대로 연습용 배경으로 등록하지 않는다. 참고 영상과 앱에서 사용할
 정리된 배경 자산은 서로 다른 항목으로 관리한다.
+
+장면별로 4방향의 그림자·긴 그림자·밝은 면을 직접 작성한다.
+`scripts/scene-art.mjs`가 원본이며 `npm run assets:generate`가 SVG,
+`src/content/scenes.generated.ts`, `public/scene-packs.json`을 함께 만든다.
+생성 결과의 해시를 캐시 이름에 포함해 변경된 마스크를 이전 버전과 섞지 않는다.
+`npm run assets:verify`는 파일 존재·동일 viewBox·영역 ID를 검사한다.
+영상 속 실내는 관찰한 요소를 정면 구도로 다시 구성한 연습용 해석이다.

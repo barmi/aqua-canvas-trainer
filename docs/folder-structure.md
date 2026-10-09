@@ -1,88 +1,73 @@
 # 폴더 구조와 책임
 
-현재 파일과, `.gitkeep`으로 준비한 확장 폴더를 함께 표시한다.
-`public/assets`의 URL은 Vite의 `BASE_URL`을 기준으로 만든다.
+2026-10-09 구현 상태입니다. 정적 자산 URL은 Vite `BASE_URL`을 기준으로 만듭니다.
 
 ```text
 aqua-canvas-trainer/
-├── README.md
-├── LICENSE
-├── package.json
-├── package-lock.json
-├── tsconfig.json
-├── vite.config.ts
-├── index.html
+├── README.md / package.json / package-lock.json
+├── tsconfig.json / vite.config.ts / index.html
 ├── docs/
-│   ├── design-draft.md             제품·UX·기술 설계 초안
-│   ├── folder-structure.md         폴더별 책임
-│   └── asset-catalog.md            참고 영상과 배경 자산 제작 규칙
+│   ├── design-draft.md             제품·UX·기술 설계
+│   ├── implementation-plan.md      이슈별 진행표
+│   ├── device-test-checklist.md    iPad/Pencil 수용 테스트
+│   ├── folder-structure.md
+│   └── asset-catalog.md
+├── scripts/
+│   ├── scene-art.mjs               6종 장면과 방향별 명암 원본
+│   ├── generate-scenes.mjs         SVG·카탈로그·캐시 목록 생성
+│   ├── verify-assets.mjs           파일·viewBox·영역 참조 검사
+│   ├── generate-icons.mjs          PWA 아이콘 생성
+│   ├── pwa-plugin.ts               빌드별 Service Worker 생성
+│   └── verify-build.mjs            배포 파일·캐시 목록·아이콘 검사
 ├── public/
+│   ├── manifest.webmanifest / favicon.svg / icons/
+│   ├── scene-packs.json            장면별 파일 목록과 콘텐츠 해시
 │   └── assets/
-│       ├── references/
-│       │   └── videos/
-│       │       └── watercolor-plant-room.mp4
-│       ├── scenes/                배경별 선화·바탕색·마스크·썸네일 (준비)
-│       ├── brushes/               붓 질감 (준비)
-│       └── papers/                종이 질감 (준비)
+│       ├── references/videos/watercolor-plant-room.mp4
+│       ├── scenes/<scene-id>/      선화·바탕색·썸네일·마스크·가이드
+│       ├── brushes/               후속 래스터 붓 자산용
+│       └── papers/                후속 종이 질감 자산용
 └── src/
-    ├── main.tsx                   React 진입점
-    ├── app/
-    │   ├── App.tsx                현재: 개발 준비 및 참고 영상 화면
-    │   └── styles.css             기본 반응형 스타일
-    ├── domain/
-    │   ├── scene.ts               PlannedScene / ReadyScene, 영역
-    │   ├── lighting.ts            광원 종류·방향·시간대
-    │   ├── guide.ts               가이드와 단계·기법·팔레트
-    │   └── painting.ts            붓·스트로크·연습 세션
+    ├── main.tsx
+    ├── app/                       화면·세션·저장·오프라인 조합과 스타일
+    ├── domain/                    scene·lighting·guide·painting 타입
     ├── content/
-    │   ├── README.md
-    │   ├── scenes.catalog.ts      제작 예정 배경 6종
-    │   ├── lighting-presets.ts    시간대 프리셋 5종
-    │   ├── references.ts          영상 출처·URL·검증 정보
-    │   └── guides/                장면별 실제 가이드 (준비)
+    │   ├── scenes.catalog.ts      배경 설명과 자산 연결
+    │   ├── scenes.generated.ts    생성 파일; 직접 편집하지 않음
+    │   ├── lighting-options.ts    지원 광원과 4방향
+    │   ├── lighting-presets.ts    시간대별 시작 조명
+    │   ├── references.ts          영상 출처·경로·파일 정보
+    │   └── guides/                5단계 가이드 레시피
     ├── features/
-    │   ├── README.md
-    │   ├── scene-library/         배경 선택 (준비)
-    │   ├── lighting-controls/     광원·시간대 설정 (준비)
-    │   ├── guide-panel/           단계별 채색 안내 (준비)
-    │   ├── painting-workspace/    캔버스와 도구 UI (준비)
-    │   └── practice-library/      저장한 연습 목록 (준비)
+    │   ├── scene-library/         배경 선택·오프라인 표시
+    │   ├── lighting-controls/     시간대·광원·방향 설정
+    │   ├── guide-panel/           단계·팔레트·추천 붓·힌트
+    │   ├── painting-workspace/    캔버스·도구·내보내기·엔진 연결
+    │   └── practice-library/      생성·목록·썸네일·가져오기
     ├── engine/
-    │   ├── README.md
-    │   ├── input/                 Pencil·터치 입력 (준비)
-    │   ├── brush/                 붓·수분·안료 표현 (준비)
-    │   ├── renderer/              레이어·합성·마스크 (준비)
-    │   └── history/               undo/redo·재생 (준비)
+    │   ├── input/                 펜·터치·좌표·제스처
+    │   ├── brush/                 시드 기반 Canvas 붓
+    │   ├── renderer/              채색·rAF·PNG 합성
+    │   └── history/               스트로크·undo/redo
     ├── platform/
-    │   ├── README.md
-    │   ├── storage/               IndexedDB·자동 저장 (준비)
-    │   └── pwa/                   설치·오프라인 (준비)
+    │   ├── storage/               JSON 검증·IndexedDB·자동 저장
+    │   └── pwa/                   등록·캐시·업데이트·Worker 원본
     └── shared/
-        └── ui/                    기능 간 공통 컴포넌트 (준비)
+        ├── id.ts                  LAN HTTP에서도 쓸 수 있는 ID 생성
+        └── ui/                    후속 공통 UI용
 ```
 
 ## 의존 관계
 
-- `domain`: 데이터 계약만 정의한다. React, DOM, 저장소를 import하지 않는다.
-- `content`: 도메인 타입을 만족하는 콘텐츠 데이터를 제공한다.
-- `engine`: 도메인 타입을 사용하며 React 없이 입력·렌더링을 수행한다.
-- `platform`: 브라우저 저장소와 Service Worker의 세부 동작을 격리한다.
-- `features`: UI와 엔진·저장소를 연결한다.
-- `app`: 화면들을 조합하고 전역 수명 주기를 관리한다.
-- `shared/ui`: 여러 기능에 실제로 필요한 공통 UI가 생길 때 추가한다.
+- `domain`: 타입 계약이며 React·DOM·저장소를 import하지 않습니다.
+- `content`: 장면과 학습 레시피를 제공합니다.
+- `engine`: React 없이 입력과 픽셀 처리를 담당합니다.
+- `platform`: 저장소와 브라우저 수명 주기·캐시를 담당합니다.
+- `features`: 화면과 엔진을 연결합니다.
+- `app`: 세션·화면 전환과 플랫폼 상태를 조합합니다.
 
-현재는 개발 준비 화면만 있어 라우터, 상태 관리 라이브러리, 백엔드,
-서비스 워커 의존성을 추가하지 않았다. 기능 구현 시 필요한 범위에서 도입한다.
-
-## 기능을 추가하는 예
-
-새 배경을 만들 때는 `public/assets/scenes/<scene-id>/`에 자산을 두고
-`content/scenes.catalog.ts`에 메타데이터를 등록한다. 실제 가이드는
-`content/guides/`에 두고 `ReadyScene.guideIds`로 연결한다.
-
-펜 입력은 `engine/input/`, 붓 표현은 `engine/brush/`에서 구현한다.
-`features/painting-workspace/`가 두 엔진과 렌더러를 연결하며, 저장 버튼과
-자동 저장은 `platform/storage/`의 저장소를 호출한다.
-
-의미 있는 검증은 구현 모듈 가까이에 `*.test.ts`로 추가한다. 현재 폴더만
-존재하는 기능을 위해 동작하지 않는 테스트나 빈 테스트 러너를 넣지 않는다.
+그림 원본은 `scripts/scene-art.mjs`, 설명·난이도는 `content/scenes.catalog.ts`,
+채색 안내는 `content/guides/`에서 수정합니다. `npm run assets:generate`가
+SVG·TS·오프라인 목록을 함께 갱신합니다. Worker는 빌드에서 `dist/sw.js`로
+생성되며 개발 서버에서는 등록하지 않습니다. 테스트는 모듈 옆에 둡니다.
+`.idea/` 등 IDE 설정과 `node_modules/`, `dist/`는 Git에서 제외합니다.

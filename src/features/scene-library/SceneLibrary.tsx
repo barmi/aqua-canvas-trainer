@@ -3,7 +3,7 @@ import { watercolorReference } from '../../content/references'
 import type { ReadyScene } from '../../domain/scene'
 
 const levels = { beginner: '첫걸음', intermediate: '차근차근', advanced: '조금 더 깊이' }
-export function SceneLibrary({ onSelect }: { onSelect: (scene: ReadyScene) => void }) {
+export function SceneLibrary({ onSelect, online=true, cached=new Set<string>() }: { onSelect: (scene: ReadyScene) => void; online?:boolean; cached?:ReadonlySet<string> }) {
   return <>
     <section className="library-intro">
       <p className="eyebrow">A LITTLE LIGHT, A LITTLE COLOR</p>
@@ -14,14 +14,15 @@ export function SceneLibrary({ onSelect }: { onSelect: (scene: ReadyScene) => vo
     <section className="scene-section" aria-labelledby="scene-heading">
       <div className="section-heading"><h2 id="scene-heading">연습할 풍경</h2><span>선화와 옅은 바탕색에서 시작해요</span></div>
       <ul className="scene-grid">{sceneCatalog.map((scene, i) => <li key={scene.id}>
-        <button className="scene-card" disabled={scene.status !== 'ready'} onClick={() => scene.status === 'ready' && onSelect(scene)}>
+        <button className="scene-card" disabled={scene.status !== 'ready'||(!online&&!cached.has(scene.id))} onClick={() => scene.status === 'ready' && onSelect(scene)}>
           <div className="scene-art">{scene.status === 'ready'
             ? <img src={scene.assets.thumbnailUrl} alt={scene.title} loading="lazy" />
             : <span className="coming-art">✧</span>}
             <span className="scene-number">0{i+1}</span>
+            {cached.has(scene.id)&&<span className="offline-chip">오프라인 준비됨</span>}
           </div>
           <div className="scene-description"><span className="scene-level">{scene.status === 'ready' ? levels[scene.difficulty] : '준비 중'}</span><h3>{scene.title}</h3><p>{scene.description}</p><span className="scene-goals">{scene.learningGoals.join(' · ')}</span>
-          {scene.status === 'ready' && <span className="scene-action">이 풍경으로 연습하기 ↗</span>}</div>
+          {scene.status === 'ready' && <span className="scene-action">{!online&&!cached.has(scene.id)?'인터넷 연결 후 연습할 수 있어요':'이 풍경으로 연습하기 ↗'}</span>}</div>
         </button>
       </li>)}</ul>
     </section>

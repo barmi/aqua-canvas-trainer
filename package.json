@@ -8,6 +8,8 @@
     "test": "vitest run",
     "assets:generate": "node scripts/generate-scenes.mjs",
     "assets:verify": "node scripts/verify-assets.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "build:verify": "node scripts/verify-build.mjs",
     "dev": "vite",
     "dev:ipad": "vite --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
