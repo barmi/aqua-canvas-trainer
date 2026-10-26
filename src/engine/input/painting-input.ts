@@ -16,12 +16,31 @@ interface Callbacks {
   preview: (stroke: PaintStroke | null) => void
   complete: (stroke: PaintStroke) => void
   viewport: (view: Viewport) => void
+  /** A quick two-finger tap, as in drawing apps. */
+  undo?: () => void
+  /** A quick three-finger tap. */
+  redo?: () => void
 }
+/** A multi-finger tap ends within this time of its first contact. */
+export const tapMs = 350
+/** A finger that travels further than this is pinching or panning, not tapping. */
+export const tapSlopPx = 12
 export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElement, callbacks: Callbacks) {
   let active: { id: number; started: number; stroke: PaintStroke; samples: StrokeSample[] } | null = null
   const touches = new Map<number, { x: number; y: number }>()
   let gesture: { midpoint: { x: number; y: number }; distance: number; viewport: Viewport } | null = null
   let pan: { id: number; x: number; y: number; viewport: Viewport } | null = null
+  // The fingers of the current touch sequence, from the first contact until every finger has lifted. Null once
+  // it can no longer be a tap: a finger moved, a pen stroke started, it took too long or the system cancelled it.
+  let tap: { started: number; starts: Map<number, { x: number; y: number }> } | null = null
+  const endTap = (event: PointerEvent) => {
+    if (!tap || touches.size) return
+    const fingers = tap.starts.size, quick = event.timeStamp - tap.started <= tapMs
+    tap = null
+    if (!quick) return
+    if (fingers === 2) callbacks.undo?.()
+    else if (fingers === 3) callbacks.redo?.()
+  }
   const finish = () => {
     if (active) { const stroke = active.stroke; active = null; callbacks.complete(stroke) }
     callbacks.preview(null)
@@ -40,6 +59,8 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
   const down = (event: PointerEvent) => {
     if (event.pointerType === 'touch') {
       if (active) return
+      if (!touches.size) tap = { started: event.timeStamp, starts: new Map() }
+      tap?.starts.set(event.pointerId, { x: event.clientX, y: event.clientY })
       touches.set(event.pointerId, { x: event.clientX, y: event.clientY })
       stage.setPointerCapture(event.pointerId)
       const data = pair()
@@ -53,7 +74,7 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return
     stage.setPointerCapture(event.pointerId)
     if (settings.tool === 'pan') { pan = { id: event.pointerId, x: event.clientX, y: event.clientY, viewport: settings.viewport }; return }
-    touches.clear(); gesture = null; pan = null
+    touches.clear(); gesture = null; pan = null; tap = null
     const samples: StrokeSample[] = []
     const wet = settings.tool === 'brush' && settings.brush.brushId === 'flat-wash' && settings.washId !== undefined
     active = { id: event.pointerId, started: event.timeStamp, samples, stroke: { id: createId(), layerId: 'paint', tool: settings.tool, brush: { ...settings.brush }, seed: crypto.getRandomValues(new Uint32Array(1))[0], samples, ...(wet ? { washId: settings.washId } : {}) } }
@@ -68,6 +89,8 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
     }
     if (active) return
     if (touches.has(event.pointerId)) touches.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    const start = tap?.starts.get(event.pointerId)
+    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > tapSlopPx) tap = null
     const data = pair()
     if (gesture && data) {
       const rect = stage.getBoundingClientRect()
@@ -78,7 +101,9 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
   }
   const up = (event: PointerEvent) => {
     if (active?.id === event.pointerId) finish()
-    touches.delete(event.pointerId); gesture = null
+    if (event.type === 'pointercancel' && touches.has(event.pointerId)) tap = null
+    if (touches.delete(event.pointerId)) endTap(event)
+    gesture = null
     if (pan?.id === event.pointerId) pan = null
     if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId)
   }
@@ -88,7 +113,7 @@ export function attachPaintingInput(stage: HTMLElement, canvas: HTMLCanvasElemen
     const rect = stage.getBoundingClientRect()
     callbacks.viewport(zoomAt(callbacks.settings().viewport, Math.exp(-event.deltaY*.005), { x: event.clientX-rect.left-rect.width/2, y: event.clientY-rect.top-rect.height/2 }))
   }
-  const blur = () => { finish(); touches.clear(); gesture = null; pan = null }
+  const blur = () => { finish(); touches.clear(); gesture = null; pan = null; tap = null }
   stage.addEventListener('pointerdown', down)
   stage.addEventListener('pointermove', move)
   for (const name of ['pointerup','pointercancel','lostpointercapture']) stage.addEventListener(name, up as EventListener)

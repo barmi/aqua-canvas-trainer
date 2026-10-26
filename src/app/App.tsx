@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SceneLibrary } from '../features/scene-library/SceneLibrary'
 import type { ReadyScene } from '../domain/scene'
 import type { PracticeSession } from '../domain/painting'
@@ -19,6 +19,8 @@ export function App() {
   const [notice,setNotice]=useState('')
   const [activeId,setActiveId]=useState<string|null>(null)
   const [view,setView]=useState<'scenes'|'workspace'|'practices'>('scenes')
+  // Each screen opens at its top, not at the scroll position of the list the user picked from.
+  useEffect(()=>{if(document.scrollingElement)document.scrollingElement.scrollTop=0},[view,activeId])
   const active=sessions.find(session=>session.id===activeId)
   const scene=readyScenes.find(value=>value.id===active?.sceneId)
   const openSession=(session:PracticeSession)=>{
