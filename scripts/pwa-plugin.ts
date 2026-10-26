@@ -2,14 +2,15 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
 import type { Plugin } from 'vite'
+import type { BuildInfo } from './build-info.ts'
 
-export function pwaPlugin():Plugin{
+export function pwaPlugin(build:BuildInfo):Plugin{
   let root='',base='/'
   return {
     name:'aqua-offline',apply:'build',enforce:'post',
     configResolved(config){root=config.root;base=config.base},
     async generateBundle(_options,bundle){
-      const buildInfo=JSON.stringify({commit:process.env.GITHUB_SHA??null,base})
+      const buildInfo=JSON.stringify({...build,base})
       this.emitFile({type:'asset',fileName:'build-info.json',source:buildInfo})
       const packs=JSON.parse(await readFile(resolve(root,'public/scene-packs.json'),'utf8')) as {version:string}
       const hash=createHash('sha256')

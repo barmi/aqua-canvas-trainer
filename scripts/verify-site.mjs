@@ -56,4 +56,4 @@ await Promise.all(Array.from({length:4},async()=>{
 }))
 const video=await (await get('assets/references/videos/watercolor-plant-room.mp4','video/mp4',{headers:{Range:'bytes=0-31'}})).arrayBuffer()
 if(Buffer.from(video).subarray(4,8).toString()!=='ftyp')throw Error('Invalid reference video')
-console.log(`Verified ${site.href}: commit ${info.commit}, ${paths.length} static files, ${Object.keys(packs.scenes).length} scene packs, manifest, worker, and video`)
+console.log(`Verified ${site.href}: v${info.version} built ${info.builtAt}, commit ${info.commit}, ${paths.length} static files, ${Object.keys(packs.scenes).length} scene packs, manifest, worker, and video`)
