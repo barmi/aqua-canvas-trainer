@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import type { ReadyScene } from '../../domain/scene'
 import type { BrushId, BrushSettings, PaintStroke, PracticeSession } from '../../domain/painting'
 import type { GuideDefinition, GuideStep } from '../../domain/guide'
@@ -149,6 +150,8 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
       // A round stroke or an eraser between flat strokes ends the layer, so the wash dries with it.
       complete: stroke => { if (isWetStroke(stroke)) wet(stroke); else dry(); setHistory(previous => appendStroke(previous, stroke)) },
       viewport: setViewport,
+      undo: () => setHistory(undo),
+      redo: () => setHistory(redo),
     })
     return () => { detach(); painter.destroy(); renderer.current = null }
   }, [scene.id, washIdFor, wet, dry])
@@ -181,6 +184,12 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
     return () => window.removeEventListener('keydown', keydown)
   }, [])
 
+  const lastStep=guide.steps.length-1
+  /** Brings the full guide into view from the step bar, opening it first when it was folded away. */
+  const showGuide=()=>{
+    setGuideVisible(true)
+    requestAnimationFrame(()=>stageRef.current?.closest('.workspace-grid')?.querySelector('.guide-panel')?.scrollIntoView?.({behavior:'smooth',block:'start'}))
+  }
   const applyPreset=(current:GuideStep)=>{setBrush(previous=>presetBrush(previous,current));setTool(presetTool(current))}
   const chooseBrushType=(brushId:BrushId)=>{setBrush({...brush,brushId,brushVersion:presetBrushVersion(brushId)});setTool('brush')}
   const snapshot=():PracticeSession=>({...initialSession,strokes:history.strokes,historyCursor:history.cursor,baseWashVisible:showBase,guide:{id:guide.id,version:guide.version,currentStepId:guide.steps[stepIndex].id}})
@@ -205,11 +214,17 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
         <label className="slider-label">붓 크기 <output>{brush.size}</output><input type="range" aria-label="붓 크기" min="2" max="120" value={brush.size} onChange={event => setBrush({...brush,size:Number(event.target.value)})}/></label>
         {/* The eraser only has a size and a strength: water and pigment do nothing to it, so they are disabled while it is active. */}
         {(['water','pigment','opacity'] as const).map(key => <label className="slider-label" key={key}>{({water:'수분',pigment:'안료',opacity:tool==='eraser'?'세기':'농도'})[key]}<output>{Math.round(brush[key]*100)}%</output><input type="range" min="0.05" max="1" step="0.05" value={brush[key]} disabled={tool==='eraser'&&key!=='opacity'} onChange={event => setBrush({...brush,[key]:Number(event.target.value)})}/></label>)}
-        <div className="history-buttons"><button disabled={!history.cursor} onClick={() => setHistory(undo)} aria-label="실행 취소">↶ 취소</button><button disabled={history.cursor === history.strokes.length} onClick={() => setHistory(redo)} aria-label="다시 실행">다시 ↷</button></div>
         <label className="check-label"><input type="checkbox" checked={showBase} onChange={event => setShowBase(event.target.checked)}/>기본 바탕색</label>
-        <p className="input-hint">가볍게 누르면 얇고 옅게,<br/>꾹 누르면 넓고 진하게 칠해요.<br/>손가락 두 개로 확대·이동해요.<br/>손가락은 색을 남기지 않아요.</p>
+        <p className="input-hint">가볍게 누르면 얇고 옅게,<br/>꾹 누르면 넓고 진하게 칠해요.<br/>손가락 두 개로 확대·이동해요.<br/>두 손가락 탭은 취소, 세 손가락 탭은 다시 실행.<br/>손가락은 색을 남기지 않아요.</p>
       </aside>
-      <div className="canvas-column">
+      <div className="canvas-column" style={{'--paper-aspect':scene.canvasSize.width/scene.canvasSize.height} as CSSProperties}>
+        {/* Shown when the guide is not beside the canvas (below it on narrow screens, or folded away), so the step and its buttons stay in view while painting. */}
+        <div className="step-bar" aria-label="현재 단계">
+          <span className="step-bar-count">{String(stepIndex+1).padStart(2,'0')}<small> / {String(guide.steps.length).padStart(2,'0')}</small></span>
+          <strong>{step.title}</strong>
+          <button type="button" className="text-button" onClick={showGuide}>설명 보기</button>
+          <div className="step-bar-actions"><button type="button" className="secondary-button" disabled={!stepIndex} onClick={()=>setStepIndex(stepIndex-1)}>이전</button><button type="button" className="primary-button" onClick={()=>{if(stepIndex<lastStep)setStepIndex(stepIndex+1);else setShowHint(false)}}>{stepIndex===lastStep?'가이드 끄고 감상':'다음 →'}</button></div>
+        </div>
         <div className={`canvas-stage tool-${tool}`} ref={stageRef}>
           <div className="paper-frame" style={{ transform:`translate(${viewport.x}px,${viewport.y}px) scale(${viewport.scale})`, aspectRatio:`${scene.canvasSize.width}/${scene.canvasSize.height}` }}>
             {showBase && <img className="paper-layer" src={scene.assets.baseWashUrl} alt="" draggable={false} onError={() => setAssetError(true)} />}
@@ -223,7 +238,7 @@ export function PaintingWorkspace({ scene, initialSession, onBack, onSessionChan
         {/* The wet badge sits on the canvas frame where the beginner is looking, as a sibling of the stage so its button never starts a stroke. */}
         {wetUntil!==null&&<div className="wet-wash" role="status"><svg viewBox="0 0 12 16" aria-hidden="true"><path d="M6 0C6 0 0 7 0 10.5A6 6 0 0 0 12 10.5C12 7 6 0 6 0Z"/></svg><span>젖은 워시 · 겹쳐 칠해도 같은 농도{wetRemaining<=wetCountdownMs&&<> · <output>{Math.ceil(wetRemaining/1000)}초</output></>}</span><button type="button" className="dry-button" onClick={dryWithNotice}>말리기</button></div>}
         {wetUntil===null&&driedNotice&&<div className="wash-dried" role="status">워시가 말랐어요 · 이제 겹치면 진해져요</div>}
-        <div className="canvas-bottom"><span>나의 작은 수채화 · {history.cursor}번의 붓질 · {offlineLabel}</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
+        <div className="canvas-bottom"><div className="history-buttons"><button disabled={!history.cursor} onClick={() => setHistory(undo)} aria-label="실행 취소">↶ 취소</button><button disabled={history.cursor === history.strokes.length} onClick={() => setHistory(redo)} aria-label="다시 실행">다시 ↷</button></div><span className="canvas-status">나의 작은 수채화 · {history.cursor}번의 붓질 · {offlineLabel}</span><div className="zoom-controls"><button aria-label="축소" onClick={() => setViewport(zoomAt(viewport,.8))}>−</button><button aria-label="화면 맞추기" onClick={() => setViewport(initialViewport)}>{Math.round(viewport.scale*100)}%</button><button aria-label="확대" onClick={() => setViewport(zoomAt(viewport,1.25))}>＋</button></div></div>
       </div>
       {guideVisible&&<GuidePanel guide={guide} index={stepIndex} onStep={setStepIndex} onColor={color=>{setBrush({...brush,color});setTool('brush')}} onBrush={applyPreset} brush={brush} tool={tool} stepImage={examples.stepImage} finishedImage={examples.finishedImage} exampleAvailable={!examples.failed} showHint={showHint} onHint={setShowHint} opacity={hintOpacity} onOpacity={setHintOpacity} showTrace={showTrace} onTrace={setShowTrace} traceOpacity={traceOpacity} onTraceOpacity={setTraceOpacity}/>}
     </div>

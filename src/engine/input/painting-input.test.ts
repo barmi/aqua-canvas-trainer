@@ -14,15 +14,22 @@ function harness() {
     getBoundingClientRect: () => ({left:0,top:0,width:1000,height:760}),
   }) as unknown as HTMLElement
   const canvas = {getBoundingClientRect:()=>({left:0,top:0,right:1000,bottom:760,width:1000,height:760})} as HTMLCanvasElement
-  const complete = vi.fn<(stroke: PaintStroke)=>void>(), viewport = vi.fn()
+  const complete = vi.fn<(stroke: PaintStroke)=>void>(), viewport = vi.fn(), undo = vi.fn(), redo = vi.fn()
   const settings = {brush:{brushId:'watercolor-round' as PaintStroke['brush']['brushId'],brushVersion:1,color:'#aabbcc',size:18,water:.7,pigment:.5,opacity:.6},tool:'brush' as PaintTool,viewport:{scale:1,x:0,y:0},washId:undefined as string|undefined}
-  const detach = attachPaintingInput(stage,canvas,{settings:()=>settings,complete,preview:vi.fn(),viewport})
-  const emit = (type: string, id: number, pointerType='pen', x=300) => {
+  const detach = attachPaintingInput(stage,canvas,{settings:()=>settings,complete,preview:vi.fn(),viewport,undo,redo})
+  const emit = (type: string, id: number, pointerType='pen', x=300, timeStamp=0) => {
     const event = new Event(type,{cancelable:true})
     Object.assign(event,{pointerId:id,pointerType,clientX:x,clientY:300,button:0,pressure:.6,tiltX:20,tiltY:0})
+    Object.defineProperty(event,'timeStamp',{value:timeStamp})
     stage.dispatchEvent(event)
   }
-  return {emit,complete,viewport,settings,detach}
+  /** Fingers touching down together and lifting at `liftAt` ms, each lift followed by its lostpointercapture. */
+  const fingers = (ids: number[], liftAt = 100) => {
+    for (const id of ids) h.emit('pointerdown',id,'touch',100*id)
+    for (const id of ids) { h.emit('pointerup',id,'touch',100*id,liftAt); h.emit('lostpointercapture',id,'touch',100*id,liftAt) }
+  }
+  const h = {emit,complete,viewport,undo,redo,settings,detach,fingers}
+  return h
 }
 test('finger and palm contacts never create strokes', () => {
   const h=harness();h.emit('pointerdown',1,'touch');h.emit('pointermove',1,'touch',500);h.emit('pointerup',1,'touch')
@@ -40,6 +47,22 @@ test('two fingers zoom but contacts during a pen stroke cannot move the paper', 
   expect(h.viewport.mock.calls[0][0].scale).toBe(2)
   h.viewport.mockClear();h.emit('pointerdown',3);h.emit('pointerdown',4,'touch');h.emit('pointermove',4,'touch',800)
   expect(h.viewport).not.toHaveBeenCalled();h.detach()
+})
+test('a quick two-finger tap undoes and a three-finger tap redoes, once each', () => {
+  const h=harness()
+  h.fingers([1,2]);expect(h.undo).toHaveBeenCalledTimes(1);expect(h.redo).not.toHaveBeenCalled()
+  h.fingers([3,4,5]);expect(h.redo).toHaveBeenCalledTimes(1);expect(h.undo).toHaveBeenCalledTimes(1)
+  h.fingers([6]);expect(h.undo).toHaveBeenCalledTimes(1);expect(h.complete).not.toHaveBeenCalled();h.detach()
+})
+test('pinching, slow holds, cancelled touches and pen strokes are not taps', () => {
+  const h=harness()
+  h.emit('pointerdown',1,'touch',200);h.emit('pointerdown',2,'touch',400);h.emit('pointermove',2,'touch',600)
+  h.emit('pointerup',1,'touch',200,100);h.emit('pointerup',2,'touch',600,100)
+  expect(h.viewport).toHaveBeenCalled()
+  h.fingers([3,4],1000)
+  h.emit('pointerdown',5,'touch');h.emit('pointerdown',6,'touch',600);h.emit('pointercancel',5,'touch');h.emit('pointerup',6,'touch',600,100)
+  h.emit('pointerdown',7,'touch');h.emit('pointerdown',8);h.emit('pointerup',8);h.emit('pointerdown',9,'touch',600);h.emit('pointerup',9,'touch',600,100)
+  expect(h.undo).not.toHaveBeenCalled();expect(h.redo).not.toHaveBeenCalled();h.detach()
 })
 test('the wash id is copied only onto flat-wash brush strokes', () => {
   const h=harness()

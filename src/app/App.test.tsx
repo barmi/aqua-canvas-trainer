@@ -220,3 +220,33 @@ test('the wash dries when its window elapses, on a colour, step or eraser change
   expect(wetBadge()).toBeNull()
   vi.useRealTimers()
 },10000)
+test('the workspace opens at the top, undo sits under the canvas and the step bar moves through the guide',async()=>{
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true)
+  stubPointer()
+  await mount()
+  // jsdom has no scrolling element; stand one in, scrolled down to the scene cards.
+  const scroller={scrollTop:600}
+  Object.defineProperty(document,'scrollingElement',{configurable:true,get:()=>scroller})
+  await click(document.querySelector('.scene-card:not(:disabled)'))
+  await settle()
+  expect(scroller.scrollTop).toBe(0)
+  delete (document as {scrollingElement?:unknown}).scrollingElement
+  const scene=readyScenes.find(value=>value.title===document.querySelector('.workspace-heading h1')?.textContent)!
+  const steps=defaultGuide(scene).steps
+  // Undo and redo live in the row under the canvas, not at the bottom of the scrolling tools panel.
+  expect(document.querySelector('.tools-panel .history-buttons')).toBeNull()
+  const undoButton=document.querySelector('.canvas-bottom button[aria-label="실행 취소"]') as HTMLButtonElement
+  expect(undoButton.disabled).toBe(true)
+  await tap(document.querySelector('.canvas-stage')!,300)
+  expect(undoButton.disabled).toBe(false)
+  await click(undoButton)
+  expect(rendered.history!.cursor).toBe(0)
+  // The step bar shows the current step and moves the guide with it.
+  const bar=document.querySelector('.canvas-column .step-bar')!
+  expect(bar.querySelector('strong')?.textContent).toBe(steps[0].title)
+  await click([...bar.querySelectorAll('button')].find(button=>button.textContent==='다음 →')!)
+  expect(bar.querySelector('strong')?.textContent).toBe(steps[1].title)
+  expect(document.querySelector('.step-dots button[aria-current="step"]')?.textContent).toBe('2')
+  await click([...bar.querySelectorAll('button')].find(button=>button.textContent==='이전')!)
+  expect(document.querySelector('.step-dots button[aria-current="step"]')?.textContent).toBe('1')
+})

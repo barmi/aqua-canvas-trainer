@@ -43,3 +43,19 @@
 /* The eraser card shows size and strength only; the tools panel greys out the sliders the eraser ignores. */
 .brush-specs.eraser{grid-template-columns:repeat(2,1fr)}.slider-label:has(input:disabled){opacity:.4}
 @media(max-width:650px){.wet-wash,.wash-dried{font-size:11px;top:8px;left:8px}}
+/* Undo and redo sit under the canvas, next to the zoom, so they never need the tools panel to be scrolled. */
+.canvas-bottom .history-buttons{border:0;padding:0;margin:0;gap:4px}.canvas-bottom .history-buttons button{min-width:64px;font-size:12px;color:#4d6546;border:1px solid var(--line);border-radius:4px;background:#fffefa}.canvas-status{flex:1;min-width:0}
+/* The step bar keeps the current step and its buttons beside the canvas whenever the guide is not: below it on narrow screens, or folded away. */
+.canvas-column{--step-bar-h:0px;container-type:inline-size}.step-bar{display:none;align-items:center;gap:10px;height:52px;margin-bottom:8px;padding:0 4px 0 12px;background:#fffefa;border:1px solid var(--line);border-radius:5px}.step-bar-count{font:italic 15px Georgia,serif;color:#a6b393;white-space:nowrap}.step-bar-count small{font-size:11px}.step-bar strong{flex:1;min-width:0;font:500 14px var(--serif);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.step-bar .text-button{white-space:nowrap;text-decoration:underline}.step-bar-actions{display:flex;gap:4px}.step-bar-actions button{white-space:nowrap;padding:8px 12px;font-size:12px}.step-bar-actions button:disabled{opacity:.3}
+.guide-collapsed .canvas-column{--step-bar-h:60px}.guide-collapsed .step-bar{display:flex}
+@media(max-width:1050px){.canvas-column{--step-bar-h:60px}.step-bar{display:flex}}
+.canvas-column .wet-wash,.canvas-column .wash-dried{top:calc(var(--step-bar-h) + 12px)}
+/* The stage is as tall as the paper at the column's full width, but never taller than the screen leaves room for (step bar,
+   bottom row and margins); the paper then fits the stage both ways, so a folded guide enlarges it instead of clipping it. */
+.workspace-grid .canvas-stage{container-type:size;height:clamp(240px,min(calc((100cqw - 36px) / var(--paper-aspect) + 36px),calc(100dvh - 78px - var(--step-bar-h))),1400px)}
+.workspace-grid .paper-frame{max-width:none;width:min(calc(100cqw - 36px),calc((100cqh - 36px) * var(--paper-aspect)))}
+.tools-panel{max-height:calc(100dvh - 24px)}
+@media(min-width:1051px){.guide-panel{max-height:calc(100dvh - 24px)}}
+/* Beside the canvas on a tablet, the tools panel takes the canvas column's height and scrolls, so the guide starts right below the canvas. */
+@media(max-width:1050px) and (min-width:651px){.tools-panel{contain:size;align-self:stretch;max-height:none}}
+@media(max-width:650px){.step-bar{gap:8px}.step-bar .text-button{display:none}.step-bar-actions button{padding:8px 10px}.canvas-bottom{flex-wrap:wrap}.canvas-status{order:3;flex-basis:100%}}
