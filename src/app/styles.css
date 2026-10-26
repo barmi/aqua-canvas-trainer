@@ -59,3 +59,5 @@
 /* Beside the canvas on a tablet, the tools panel takes the canvas column's height and scrolls, so the guide starts right below the canvas. */
 @media(max-width:1050px) and (min-width:651px){.tools-panel{contain:size;align-self:stretch;max-height:none}}
 @media(max-width:650px){.step-bar{gap:8px}.step-bar .text-button{display:none}.step-bar-actions button{padding:8px 10px}.canvas-bottom{flex-wrap:wrap}.canvas-status{order:3;flex-basis:100%}}
+/* The version and deploy time close the page on their own line, quiet but readable. */
+.app-footer{flex-wrap:wrap;row-gap:10px}.build-stamp{flex-basis:100%;font-size:11px;color:#8d977f;font-variant-numeric:tabular-nums}

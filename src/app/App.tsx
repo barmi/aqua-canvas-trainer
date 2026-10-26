@@ -12,6 +12,7 @@ import { usePracticeStore } from '../platform/storage/usePracticeStore'
 import { maxProjectBytes, parsePracticeFile } from '../platform/storage/practice-file'
 import { createId } from '../shared/id'
 import { useOffline } from '../platform/pwa/useOffline'
+import { appBuild, buildLabel } from '../shared/build-info'
 
 export function App() {
   const {sessions,loading,status,error,updateSession,removeSession,flush}=usePracticeStore()
@@ -45,6 +46,6 @@ export function App() {
     {(offline.notice||notice)&&<div className="storage-banner" role="status">{notice||offline.notice}</div>}
     <div className="offline-status" role="status"><span>{!offline.online?'오프라인 연습':offline.preparing?'선택한 풍경을 오프라인으로 준비 중…':offline.supported?'선택한 풍경은 오프라인에서도 연습할 수 있어요':'온라인 연습 · 오프라인 설치는 HTTPS 배포 후 제공'}</span>{offline.updateAvailable&&<button onClick={async()=>{if(await flush())offline.update();else setNotice('저장이 끝난 뒤 새 버전을 사용할 수 있어요.')}}>새 버전 사용 ↻</button>}</div>
     <main>{loading?<p className="empty-state" role="status">저장한 연습을 불러오고 있어요.</p>:view==='workspace'&&active&&scene?<PaintingWorkspace key={active.id} scene={scene} initialSession={active} onBack={()=>setView('scenes')} onSessionChange={updateSession} onLightingChange={choice=>start(scene,choice)} offlineLabel={offline.cached.has(scene.id)?'오프라인 준비됨':offline.preparing?'풍경 준비 중…':'온라인 연습'}/>:view==='practices'?<PracticeLibrary sessions={sessions} onOpen={openSession} onImport={importSession} onDelete={id=>void removeSession(id)}/>:<SceneLibrary onSelect={selected=>start(selected)} online={offline.online} cached={offline.cached}/>}</main>
-    <footer className="app-footer"><span>aqua canvas</span><span>한 겹의 색, 한 번의 발견.</span></footer>
+    <footer className="app-footer"><span>aqua canvas</span><span>한 겹의 색, 한 번의 발견.</span><span className="build-stamp">{buildLabel(appBuild,import.meta.env.DEV)}</span></footer>
   </div>
 }
